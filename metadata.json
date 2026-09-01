@@ -1,0 +1,6 @@
+{
+  "name": "DanAnty004",
+  "description": "An interactive educational learning platform featuring English, Mathematics, Science, Computer Studies, and World Languages with quizzes, AI tutoring, and progress tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
