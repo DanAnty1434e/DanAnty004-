@@ -33,12 +33,14 @@ interface AITutorSectionProps {
 
 
 const PRESET_PROMPTS = [
-  { label: 'Solve Equation (Quadratic)', prompt: 'Solve 2x^2 + 7x + 3 = 0 showing the exact quadratic formula method, steps, and final roots.', subject: 'mathematics' as SubjectId },
-  { label: 'Pythagorean Theorem', prompt: 'Solve a right triangle with legs a = 6 and b = 8 using the Pythagorean Theorem. Show formula, method, and proof.', subject: 'mathematics' as SubjectId },
-  { label: 'Science: Photosynthesis', prompt: 'Why do plant leaves look green, and what is the chemical formula for photosynthesis?', subject: 'science' as SubjectId },
-  { label: 'Coding: How Loops Work', prompt: 'Explain how a for-loop works in programming with a simple pizza analogy.', subject: 'computer-studies' as SubjectId },
-  { label: 'Languages: Spanish Greetings', prompt: 'What are the 5 most important polite phrases in Spanish with phonetic pronunciation?', subject: 'world-languages' as SubjectId },
-  { label: 'English: Active vs Passive', prompt: 'Show me 3 examples of turning passive voice sentences into strong active voice.', subject: 'english' as SubjectId },
+  { label: '📐 Solve Equation (Quadratic)', prompt: 'Solve 2x^2 + 7x + 3 = 0 showing the exact quadratic formula method, steps, and final roots.', subject: 'mathematics' as SubjectId },
+  { label: '🔬 Science: Photosynthesis', prompt: 'Why do plant leaves look green, and what is the chemical formula for photosynthesis?', subject: 'science' as SubjectId },
+  { label: '💻 Coding: Python Loop & List', prompt: 'Show me how to write a Python script that filters and sorts a list of student exam scores.', subject: 'computer-studies' as SubjectId },
+  { label: '🌍 History: Industrial Revolution', prompt: 'What were the main causes and global impacts of the Industrial Revolution?', subject: 'all' as const },
+  { label: '💡 Real-World: How Planes Fly', prompt: 'Explain the physics and aerodynamics of how airplanes stay in the air with lift and thrust.', subject: 'all' as const },
+  { label: '🧠 Life & Study: Best Focus Habits', prompt: 'What are 4 science-backed study habits and focus techniques to retain complex information faster?', subject: 'all' as const },
+  { label: '🗣️ Languages: Spanish Essentials', prompt: 'What are the 5 most important polite phrases in Spanish with phonetic pronunciation and examples?', subject: 'world-languages' as SubjectId },
+  { label: '✍️ English: Active vs Passive Voice', prompt: 'Explain active vs passive voice with 3 clear transformation examples.', subject: 'english' as SubjectId },
 ];
 
 export function AITutorSection({
@@ -48,7 +50,7 @@ export function AITutorSection({
   onClearInitialContext,
   onOpenMathSolver,
 }: AITutorSectionProps) {
-  const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(initialSubject || 'all');
+  const [selectedSubject, setSelectedSubject] = useState<string>(initialSubject || 'all');
   const [tone, setTone] = useState<'kids' | 'standard' | 'advanced'>('standard');
   const [input, setInput] = useState(initialQuestion || '');
   const [loading, setLoading] = useState(false);
@@ -59,7 +61,7 @@ export function AITutorSection({
     {
       id: 'welcome-msg',
       sender: 'assistant',
-      text: "👋 **Hello! I'm your DanAnty AI Learning Tutor.**\n\nI can help you understand tough concepts in **English, Math, Science, Computer Studies, and World Languages**.\n\nAsk me any homework doubt, math problem, coding question, or language phrase, or choose one of the starter prompts below!",
+      text: "👋 **Hello! I am DanAnty AI — your Universal AI Learning Assistant & Polymath.**\n\nI am equipped to answer **any question on any subject** as well as **real-world inquiries and everyday curiosity**:\n\n• **All Academic Subjects:** Math, Physics, Chemistry, Biology, History, Geography, Economics, Law, Literature, Computer Science & Coding.\n• **Languages:** English, Hausa, French, Spanish, Arabic, German, and more.\n• **Non-Academic & Real-World:** How things work, career advice, productivity tips, technology trends, writing help, and logic puzzles.\n\nType any question below or tap a suggested inquiry!",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -203,10 +205,10 @@ export function AITutorSection({
               </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-['Outfit',sans-serif]">
-              Instant Interactive AI Tutor
+              Universal AI Polymath & Tutor
             </h1>
             <p className="text-xs sm:text-sm text-indigo-100 max-w-xl">
-              Ask any homework question, clarify misunderstandings, request practice problems, or get simple analogies tailored to your learning pace.
+              Ask anything across all academic subjects (Math, Science, Coding, History, Languages) or non-relative real-world questions, career advice, and everyday logic!
             </p>
           </div>
 
@@ -237,19 +239,27 @@ export function AITutorSection({
         <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           {/* Subject Filter */}
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-wider text-indigo-200 font-bold">Subject Focus</label>
+            <label className="text-[10px] uppercase tracking-wider text-indigo-200 font-bold">Topic / Domain</label>
             <div className="flex flex-wrap gap-1.5">
-              {(['all', 'english', 'mathematics', 'science', 'computer-studies', 'world-languages'] as const).map((s) => (
+              {[
+                { id: 'all', label: '🌟 All & Real World' },
+                { id: 'mathematics', label: '📐 Math' },
+                { id: 'science', label: '🔬 Science' },
+                { id: 'computer-studies', label: '💻 Coding' },
+                { id: 'history', label: '🌍 History/Social' },
+                { id: 'english', label: '✍️ English' },
+                { id: 'world-languages', label: '🗣️ Languages' },
+              ].map((s) => (
                 <button
-                  key={s}
-                  onClick={() => setSelectedSubject(s)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-colors ${
-                    selectedSubject === s
+                  key={s.id}
+                  onClick={() => setSelectedSubject(s.id)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+                    selectedSubject === s.id
                       ? 'bg-white text-indigo-600 shadow-sm'
                       : 'bg-indigo-700/60 hover:bg-indigo-700 text-indigo-100 border border-indigo-500/50'
                   }`}
                 >
-                  {s === 'all' ? 'All Subjects' : s.replace('-', ' ')}
+                  {s.label}
                 </button>
               ))}
             </div>

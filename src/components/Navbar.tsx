@@ -22,6 +22,7 @@ import {
   Calculator,
   School,
   Info,
+  AlarmClock,
 } from 'lucide-react';
 import { UserProgress, SubjectId, NetworkStatus, AppView, CLASS_LEVELS } from '../types';
 import { CURRICULUM_DATA } from '../data/curriculum';
@@ -37,6 +38,7 @@ interface NavbarProps {
   onOpenClassSelector: () => void;
   onOpenMathSolver: () => void;
   onOpenAboutModal: () => void;
+  onOpenAlarmModal: () => void;
   isEducatorMode: boolean;
   onToggleEducatorMode: () => void;
 }
@@ -51,6 +53,7 @@ export function Navbar({
   onOpenClassSelector,
   onOpenMathSolver,
   onOpenAboutModal,
+  onOpenAlarmModal,
   isEducatorMode,
   onToggleEducatorMode,
 }: NavbarProps) {
@@ -171,6 +174,17 @@ export function Navbar({
                 </span>
               </button>
 
+              {/* Study Alarms Button */}
+              <button
+                id="nav-alarms-btn"
+                onClick={onOpenAlarmModal}
+                className="px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 text-amber-900 hover:text-amber-950 hover:bg-amber-100/60 transition-colors border border-amber-300/80 bg-amber-50/60"
+                title="Custom Study Alarms & Reminders"
+              >
+                <AlarmClock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Alarms</span>
+              </button>
+
               <button
                 id="nav-ai-tutor-btn"
                 onClick={() => onNavigate('ai-tutor')}
@@ -199,8 +213,19 @@ export function Navbar({
             </nav>
           </div>
 
-          {/* Right Controls: Math Solver, Coin Counter, Network / Data, Search, Creator Info */}
+          {/* Right Controls: Math Solver, Alarm, Coin Counter, Network / Data, Search, Creator Info */}
           <div className="flex items-center space-x-1.5 sm:space-x-2">
+            {/* Mobile/Tablet Alarm Button */}
+            <button
+              id="nav-alarm-mobile-btn"
+              onClick={onOpenAlarmModal}
+              className="lg:hidden flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold transition shadow-2xs"
+              title="Study Alarms & Reminders"
+            >
+              <AlarmClock className="w-3.5 h-3.5 text-amber-600" />
+              <span className="text-[11px] hidden xs:inline">Alarm</span>
+            </button>
+
             {/* Mobile/Tablet Math Solver Button */}
             <button
               id="nav-math-solver-mobile-btn"

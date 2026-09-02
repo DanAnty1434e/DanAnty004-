@@ -14,29 +14,38 @@ export interface StreamTutorOptions {
 
 // Comprehensive offline instant knowledge bank for zero-data & offline mastery
 const INSTANT_KNOWLEDGE_BASE: Record<string, string> = {
-  // Mathematics
+  // Mathematics & Logic
   pythagoras: "The Pythagorean Theorem states that in a right-angled triangle, **$a^2 + b^2 = c^2$**, where $c$ is the hypotenuse (the longest side) and $a$ and $b$ are the other two legs.\n\n• **Example:** If $a = 3$ and $b = 4$, then $3^2 + 4^2 = 9 + 16 = 25 = 5^2$, so $c = 5$.\n• **Real-World Application:** Carpenters and engineers use this rule to ensure walls and corners meet at exact 90° angles.",
   fraction: "A fraction represents a part of a whole.\n\n• **Numerator (Top):** How many parts you have.\n• **Denominator (Bottom):** The total number of equal parts in the whole.\n• **Addition Rule:** If denominators match: $\\frac{1}{5} + \\frac{2}{5} = \\frac{3}{5}$. If they differ, find the Least Common Denominator (LCD) first!",
   quadratic: "The Quadratic Formula solves equations of the form **$ax^2 + bx + c = 0$**:\n\n$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\n\n• The term $b^2 - 4ac$ is the **Discriminant**:\n  - Positive ($>0$): 2 real distinct solutions\n  - Zero ($=0$): 1 repeated real solution\n  - Negative ($<0$): 2 complex/imaginary solutions",
   ratio: "A ratio compares two quantities by division (e.g. 2:3 or $\\frac{2}{3}$).\n\n• **Simplifying Ratios:** Divide both numbers by their Greatest Common Divisor (GCD).\n• **Example:** A mix of 4 cups water and 6 cups flour has a ratio of $4:6 = 2:3$.",
+  calculus: "Calculus is the mathematical study of continuous change.\n\n• **Differentiation (Derivatives):** Measures the instantaneous rate of change (slope of a curve).\n  - Power Rule: $\\frac{d}{dx}(x^n) = n x^{n-1}$\n• **Integration (Integrals):** Computes total accumulation or area under a curve:\n  - Power Rule: $\\int x^n dx = \\frac{x^{n+1}}{n+1} + C$",
 
-  // Science
+  // Science, Physics & Chemistry
   photosynthesis: "Photosynthesis is the biochemical process plants use to convert light energy into chemical energy (glucose).\n\n• **Chemical Equation:**\n$$6CO_2 + 6H_2O + \\text{Sunlight} \\longrightarrow C_6H_{12}O_6 + 6O_2$$\n• **Key Components:** Chlorophyll inside chloroplasts captures red & blue light photons and reflects green light, which is why leaves appear green.",
-  gravity: "Gravity is a fundamental natural attraction force between all objects with mass.\n\n• **Newton's Universal Gravitation:** $F = G \\frac{m_1 m_2}{r^2}$\n• **Earth's Gravitational Acceleration ($g$):** approximately $9.8\\text{ m/s}^2$ at sea level.\n• **Fun Fact:** Without gravity, planets would not orbit the sun, and the atmosphere would drift into space!",
+  gravity: "Gravity is a fundamental natural attraction force between all objects with mass.\n\n• **Newton's Universal Gravitation:** $F = G \\frac{m_1 m_2}{r^2}$\n• **Earth's Gravitational Acceleration ($g$):** approximately $9.8\\text{ m/s}^2$ at sea level.\n• **Einstein's General Relativity:** Gravity is described as the curvature of spacetime caused by mass and energy.",
   atom: "An atom is the basic building block of all matter in the universe.\n\n• **Protons:** Positively charged particles in the nucleus (+1).\n• **Neutrons:** Neutral particles with no charge (0) in the nucleus.\n• **Electrons:** Negatively charged particles (-1) orbiting in electron shells.\n• The atomic number equals the number of protons.",
+  dna: "DNA (Deoxyribonucleic Acid) carries genetic instructions for the development, functioning, and reproduction of all known living organisms.\n\n• **Structure:** Double helix formed by base pairs: Adenine (A) pairs with Thymine (T), and Cytosine (C) pairs with Guanine (G).\n• **Function:** Genes inside DNA encode the blueprints to synthesize proteins.",
 
   // Computer Science & Programming
   loop: "A loop in programming repeats a block of code until a condition is satisfied.\n\n• **For-Loop:** Used when the number of iterations is known ahead of time:\n  ```python\n  for i in range(5):\n      print(f'Step {i+1}')\n  ```\n• **While-Loop:** Runs as long as a boolean expression evaluates to `True`:\n  ```python\n  while battery_level > 10:\n      operate_sensor()\n  ```",
   variable: "A variable is a named storage container in computer memory holding data that can change during execution.\n\n• **Types:** Integers (`42`), Floating-point (`3.14`), Strings (`'Hello'`), Booleans (`True`/`False`).\n• **Analogy:** Think of a variable as a labeled box on a shelf.",
   recursion: "Recursion is a programming technique where a function calls itself to solve a smaller subproblem.\n\n• **Crucial Rule:** Every recursive function MUST have a **Base Case** to prevent an infinite loop (stack overflow)!",
+  algorithm: "An algorithm is a step-by-step procedure or set of rules to solve a specific problem or perform a computation.\n\n• **Efficiency (Big-O Notation):**\n  - $O(1)$ = Constant time\n  - $O(\\log n)$ = Binary search\n  - $O(n)$ = Linear scan\n  - $O(n \\log n)$ = Merge sort / Quick sort",
 
-  // English & Language Arts
+  // English, Literature & Languages
   active: "Active vs. Passive Voice in writing:\n\n• **Active Voice:** The subject performs the action directly.\n  *Example:* *“The scientist discovered a new galaxy.”*\n• **Passive Voice:** The subject receives the action.\n  *Example:* *“A new galaxy was discovered by the scientist.”*\n\n**Tip:** Use Active Voice for stronger, crisper, and more energetic sentences!",
   metaphor: "A metaphor is a figure of speech that asserts one thing *is* another thing to suggest a resemblance (without using 'like' or 'as').\n\n• **Metaphor:** *“Time is a thief.”*\n• **Simile (for comparison):** *“Her smile was bright like the morning sun.”*",
-
-  // Spanish Language
   spanish: "Here are essential conversational Spanish building blocks:\n\n1. **¡Hola!** (*OH-lah*) — Hello!\n2. **¿Cómo estás?** (*KOH-moh ehs-TAHS*) — How are you?\n3. **Por favor** (*pohr fah-VOHR*) — Please\n4. **Muchas gracias** (*MOO-chahs GRAH-syahs*) — Thank you very much\n5. **¡Mucho gusto!** (*MOO-choh GOOS-toh*) — Nice to meet you!\n6. **¿Dónde está...?** (*DOHN-deh ehs-TAH*) — Where is...?",
-  ser: "In Spanish, both **Ser** and **Estar** mean 'to be':\n\n• **SER (Permanent / Essential Characteristics):** Origin, profession, identity, time (e.g. *“Soy estudiante”*).\n• **ESTAR (Temporary / States & Locations):** Emotions, conditions, physical location (e.g. *“Estoy en la escuela”*).",
+  hausa: "Essential conversational Hausa phrases:\n\n1. **Sannu** — Hello / Greetings\n2. **Ina kwana?** — Good morning (How did you sleep?)\n3. **Lafiya lau** — Fine / In good health\n4. **Na gode** — Thank you\n5. **Yaya aiki?** — How is work?\n6. **Sai an jima** — See you later",
+
+  // History, Geography & Economics
+  industrial: "The Industrial Revolution (18th-19th Century) was the global transition from handcrafted agrarian economies to machine-powered manufacturing.\n\n• **Key Inventions:** James Watt's Steam Engine, the Spinning Jenny, and railways.\n• **Impact:** Urbanization, exponential production increase, and the emergence of modern capitalism and labor laws.",
+  inflation: "Inflation is the general rise in the price level of goods and services in an economy over time, reducing the purchasing power of money.\n\n• **Demand-Pull Inflation:** When aggregate demand exceeds supply.\n• **Cost-Push Inflation:** When production costs (raw materials, wages) increase.\n• **Monetary Policy:** Central banks use interest rates to manage and stabilize inflation.",
+
+  // Real-World, Practical & Non-Academic Questions
+  focus: "Top science-backed habits for laser focus and productivity:\n\n1. **The Pomodoro Technique:** Work for 25 minutes of uninterrupted focus, followed by a 5-minute break.\n2. **Eliminate Micro-Distractions:** Turn off non-urgent phone notifications and keep your workspace tidy.\n3. **Prioritize 1 Big Task Daily (The Rule of 1):** Finish your highest-impact task first before checking emails.\n4. **Hydration & Sleep:** 7-8 hours of quality sleep directly replenishes cognitive neurotransmitters.",
+  airplane: "How airplanes fly (Aerodynamics):\n\n• **Airfoil Wing Shape (Bernoulli's Principle & Newton's 3rd Law):** Airplane wings are curved on top and flat below. Air travels faster over the top curved surface, creating lower pressure above than below, producing upward **Lift**.\n• **The 4 Flight Forces:** **Lift** (upward), **Weight/Gravity** (downward), **Thrust** (forward by engines), and **Drag** (air resistance).",
 };
 
 export async function streamTutorResponse(options: StreamTutorOptions): Promise<void> {

@@ -18,6 +18,7 @@ import {
   Zap,
   Award,
   School,
+  AlarmClock,
 } from 'lucide-react';
 import { Subject, SubjectId, UserProgress, CLASS_LEVELS } from '../types';
 import { CURRICULUM_DATA } from '../data/curriculum';
@@ -32,6 +33,7 @@ interface SubjectGridProps {
   onOpenMathSolver?: () => void;
   onOpenClassSelector?: () => void;
   onOpenAboutModal?: () => void;
+  onOpenAlarmModal?: () => void;
 }
 
 const ICONS_MAP: Record<string, React.ReactNode> = {
@@ -60,6 +62,7 @@ export function SubjectGrid({
   onOpenMathSolver,
   onOpenClassSelector,
   onOpenAboutModal,
+  onOpenAlarmModal,
 }: SubjectGridProps) {
   // Find last or in-progress lesson
   const inProgressLesson = CURRICULUM_DATA.flatMap(s => s.lessons).find(l => l.id === progress.inProgressLessonId)
@@ -106,6 +109,20 @@ export function SubjectGrid({
 
             {/* Quick Actions */}
             <div className="pt-2 flex flex-wrap items-center gap-3">
+              {onOpenAlarmModal && (
+                <button
+                  id="hero-study-alarm-btn"
+                  onClick={onOpenAlarmModal}
+                  className="bg-amber-400 text-slate-950 hover:bg-amber-300 px-5 py-3 rounded-xl font-black text-xs sm:text-sm shadow-md transition-all flex items-center space-x-2 group"
+                >
+                  <AlarmClock className="w-4 h-4 text-slate-950 group-hover:rotate-12 transition-transform" />
+                  <span>Set Study Alarm</span>
+                  <span className="px-1.5 py-0.5 bg-slate-950 text-amber-300 text-[10px] font-mono rounded">
+                    Ringtone
+                  </span>
+                </button>
+              )}
+
               {onOpenMathSolver && (
                 <button
                   id="hero-solve-math-btn"
@@ -124,10 +141,10 @@ export function SubjectGrid({
                 <button
                   id="hero-play-arcade-btn"
                   onClick={onOpenArcade}
-                  className="bg-amber-400 text-slate-950 hover:bg-amber-300 px-5 py-3 rounded-xl font-black text-xs sm:text-sm shadow-md transition-all flex items-center space-x-2 group"
+                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-xl font-bold text-xs sm:text-sm border border-white/30 backdrop-blur-xs transition-colors flex items-center space-x-2 group"
                 >
-                  <Gamepad2 className="w-4 h-4 text-slate-950 group-hover:rotate-12 transition-transform" />
-                  <span>Arcade Arena (15 Games)</span>
+                  <Gamepad2 className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
+                  <span>Arcade (15 Games)</span>
                 </button>
               )}
 
@@ -138,7 +155,7 @@ export function SubjectGrid({
                   className="bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-xl font-bold text-xs sm:text-sm border border-white/30 backdrop-blur-xs transition-colors flex items-center space-x-1.5"
                 >
                   <Layers className="w-4 h-4" />
-                  <span>Browse Topics (+20 🪙)</span>
+                  <span>Topics (+20 🪙)</span>
                 </button>
               )}
 
@@ -206,8 +223,31 @@ export function SubjectGrid({
         </div>
       </div>
 
-      {/* 3 Quick Action Banners: Math Solver, Topic Explorer (+20🪙), Arcade Games */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* 4 Quick Action Banners: Study Alarms, Math Solver, Topic Explorer (+20🪙), Arcade Games */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Study Alarms Banner */}
+        <div
+          onClick={onOpenAlarmModal}
+          className="cursor-pointer bg-white p-5 rounded-2xl border border-slate-200 hover:border-amber-400 shadow-2xs hover:shadow-xs transition flex items-center justify-between group"
+        >
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+              <AlarmClock className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+                <span>Study Alarms</span>
+                <span className="px-1.5 py-0.2 bg-amber-100 text-amber-900 rounded-md text-[10px] font-black">
+                  Custom
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-900 mt-0.5">Set Study Alarm</h4>
+              <p className="text-xs text-slate-500">Custom ringtones, time & notes.</p>
+            </div>
+          </div>
+          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" />
+        </div>
+
         {/* Math Solver Banner */}
         <div
           onClick={onOpenMathSolver}
@@ -225,7 +265,7 @@ export function SubjectGrid({
                 </span>
               </div>
               <h4 className="text-sm font-bold text-slate-900 mt-0.5">Solve Any Equation</h4>
-              <p className="text-xs text-slate-500">Quadratic, linear, calculus & geometry.</p>
+              <p className="text-xs text-slate-500">Step-by-step methods.</p>
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
@@ -237,16 +277,16 @@ export function SubjectGrid({
           className="cursor-pointer bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-400 shadow-2xs hover:shadow-xs transition flex items-center justify-between group"
         >
           <div className="flex items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
               <Coins className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
                 <span>Earn 20 Coins</span>
-                <span className="px-1.5 py-0.2 bg-amber-100 rounded-md text-[10px]">Per Topic</span>
+                <span className="px-1.5 py-0.2 bg-indigo-100 rounded-md text-[10px]">Per Topic</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 mt-0.5">Subject Topics Directory</h4>
-              <p className="text-xs text-slate-500">Read topics & stack coins in your balance.</p>
+              <h4 className="text-sm font-bold text-slate-900 mt-0.5">Topics Directory</h4>
+              <p className="text-xs text-slate-500">Read topics & earn balance.</p>
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
@@ -264,10 +304,10 @@ export function SubjectGrid({
             <div>
               <div className="text-xs font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1.5">
                 <span>15 Mini-Games</span>
-                <span className="px-1.5 py-0.2 bg-purple-100 rounded-md text-[10px]">10 Coins / Play</span>
+                <span className="px-1.5 py-0.2 bg-purple-100 rounded-md text-[10px]">10 🪙 / Play</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 mt-0.5">Arcade Gaming Arena</h4>
-              <p className="text-xs text-slate-500">Math, coding, speed and trivia challenges.</p>
+              <h4 className="text-sm font-bold text-slate-900 mt-0.5">Arcade Gaming</h4>
+              <p className="text-xs text-slate-500">Speed & logic challenges.</p>
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />

@@ -52,7 +52,7 @@ export function QuickAIAssistant({
     {
       id: 'welcome',
       sender: 'assistant',
-      text: "⚡ **Instant AI Tutor Active!**\nAsk any question about your lessons, homework, formulas, coding bugs, or vocabulary. I will answer immediately!",
+      text: "⚡ **Universal AI Polymath Active!**\nAsk any question across **all academic subjects** (Math, Science, Coding, History, Languages) or **real-world topics, career advice, and everyday logic**. I will answer immediately!",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -184,10 +184,12 @@ export function QuickAIAssistant({
         `What are 2 common mistakes to avoid here?`,
       ]
     : [
-        'How do I solve quadratic equations quickly?',
-        'Explain photosynthesis with a food factory analogy',
-        'How do Python while-loops work?',
-        'What are the 5 most common Spanish verbs?',
+        '📐 Solve 2x^2 + 5x - 3 = 0',
+        '🔬 How does CRISPR gene editing work?',
+        '💻 Python function to reverse a string',
+        '🌍 What caused World War I?',
+        '💡 How do planes fly?',
+        '🧠 4 habits for high focus',
       ];
 
   return (
@@ -427,7 +429,7 @@ export function QuickAIAssistant({
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask any homework doubt, math, code..."
+                    placeholder="Ask any question on any subject or real-world topic..."
                     className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition"
                   />
                   <button

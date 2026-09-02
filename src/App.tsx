@@ -33,6 +33,14 @@ import { NetworkDataManager } from './components/NetworkDataManager';
 import { MathSolverModal } from './components/MathSolverModal';
 import { ClassSelectorModal } from './components/ClassSelectorModal';
 import { WelcomeAboutModal } from './components/WelcomeAboutModal';
+import { StudyAlarmModal } from './components/StudyAlarmModal';
+import { ActiveAlarmModal } from './components/ActiveAlarmModal';
+import {
+  StudyAlarm,
+  getSavedAlarms,
+  saveAlarms,
+  alarmAudio,
+} from './utils/studyAlarmService';
 import { Sparkles, Trophy, X, Zap, WifiOff, Coins } from 'lucide-react';
 import { getLiveNetworkStatus } from './utils/networkManager';
 
@@ -45,6 +53,8 @@ export default function App() {
   const [isNetworkManagerOpen, setIsNetworkManagerOpen] = useState(false);
   const [isMathSolverOpen, setIsMathSolverOpen] = useState(false);
   const [isClassSelectorOpen, setIsClassSelectorOpen] = useState(false);
+  const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
+  const [activeRingingAlarm, setActiveRingingAlarm] = useState<StudyAlarm | null>(null);
   const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(() => {
     try {
       const seen = localStorage.getItem('dananty_has_seen_welcome_v1');
@@ -82,6 +92,92 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Request browser notification permission for study alarms if supported
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        Notification.requestPermission();
+      } catch {}
+    }
+  }, []);
+
+  // Background Alarm Schedule Checker (Runs every second)
+  useEffect(() => {
+    const checkAlarms = () => {
+      const now = new Date();
+      const currentHours = String(now.getHours()).padStart(2, '0');
+      const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTimeStr = `${currentHours}:${currentMinutes}`;
+      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const todayDateStr = now.toISOString().split('T')[0];
+
+      // If an alarm is already ringing, don't trigger another one simultaneously
+      if (activeRingingAlarm) return;
+
+      const alarms = getSavedAlarms();
+      for (const alarm of alarms) {
+        if (!alarm.enabled) continue;
+
+        // Check time match
+        if (alarm.time === currentTimeStr) {
+          // Check day match (if days array is empty, trigger once)
+          const daysMatch = !alarm.days || alarm.days.length === 0 || alarm.days.includes(currentDay);
+
+          // Ensure it doesn't ring multiple times in the same minute of the day
+          if (daysMatch && alarm.lastTriggeredDate !== `${todayDateStr}-${currentTimeStr}`) {
+            // Update last triggered
+            const updated = alarms.map((a) =>
+              a.id === alarm.id
+                ? { ...a, lastTriggeredDate: `${todayDateStr}-${currentTimeStr}` }
+                : a
+            );
+            saveAlarms(updated);
+
+            // Trigger alarm modal & audio
+            setActiveRingingAlarm(alarm);
+
+            // Send system notification if granted
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+              try {
+                new Notification(`⏰ DanAnty004: ${alarm.title}`, {
+                  body: alarm.notes || 'Time for your scheduled study session!',
+                  icon: '/icon.png',
+                });
+              } catch {}
+            }
+            break;
+          }
+        }
+      }
+    };
+
+    const interval = setInterval(checkAlarms, 1000);
+    return () => clearInterval(interval);
+  }, [activeRingingAlarm]);
+
+  // Snooze handler
+  const handleSnoozeAlarm = (minutes: number) => {
+    if (!activeRingingAlarm) return;
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + minutes);
+    const snoozeHours = String(now.getHours()).padStart(2, '0');
+    const snoozeMinutes = String(now.getMinutes()).padStart(2, '0');
+    const snoozeTimeStr = `${snoozeHours}:${snoozeMinutes}`;
+
+    const alarms = getSavedAlarms();
+    const snoozedAlarm: StudyAlarm = {
+      ...activeRingingAlarm,
+      id: `alarm-snooze-${Date.now()}`,
+      title: `[Snoozed] ${activeRingingAlarm.title}`,
+      time: snoozeTimeStr,
+      days: [], // Trigger once
+      enabled: true,
+      notes: activeRingingAlarm.notes,
+    };
+    saveAlarms([...alarms, snoozedAlarm]);
+    setActiveRingingAlarm(null);
+  };
 
   const showXpToast = (amount: number) => {
     setToastXp(amount);
@@ -238,6 +334,7 @@ export default function App() {
         onOpenClassSelector={() => setIsClassSelectorOpen(true)}
         onOpenMathSolver={() => setIsMathSolverOpen(true)}
         onOpenAboutModal={() => setIsWelcomeOpen(true)}
+        onOpenAlarmModal={() => setIsAlarmModalOpen(true)}
         isEducatorMode={isEducatorMode}
         onToggleEducatorMode={() => setIsEducatorMode(!isEducatorMode)}
       />
@@ -309,6 +406,7 @@ export default function App() {
             onOpenMathSolver={() => setIsMathSolverOpen(true)}
             onOpenClassSelector={() => setIsClassSelectorOpen(true)}
             onOpenAboutModal={() => setIsWelcomeOpen(true)}
+            onOpenAlarmModal={() => setIsAlarmModalOpen(true)}
           />
         )}
 
@@ -479,6 +577,34 @@ export default function App() {
         isOpen={isNetworkManagerOpen}
         onClose={() => setIsNetworkManagerOpen(false)}
       />
+
+      {/* Customizable Study Alarms & Reminders Manager Modal */}
+      <StudyAlarmModal
+        isOpen={isAlarmModalOpen}
+        onClose={() => setIsAlarmModalOpen(false)}
+        onTriggerTestAlarm={(alarm) => setActiveRingingAlarm(alarm)}
+      />
+
+      {/* Active Ringing Alarm Screen Modal with Web Audio Synth */}
+      {activeRingingAlarm && (
+        <ActiveAlarmModal
+          alarm={activeRingingAlarm}
+          onDismiss={() => setActiveRingingAlarm(null)}
+          onSnooze={handleSnoozeAlarm}
+          onStartStudy={(subjectTag) => {
+            setActiveRingingAlarm(null);
+            if (subjectTag && subjectTag !== 'all') {
+              const matched = CURRICULUM_DATA.find((s) => s.id === subjectTag);
+              if (matched) {
+                setSelectedSubjectId(matched.id);
+                setActiveView('subject');
+                return;
+              }
+            }
+            setActiveView('topics');
+          }}
+        />
+      )}
 
       {/* Global Instant AI Floating Assistant (Available Across All Views, Shift+A) */}
       <QuickAIAssistant
