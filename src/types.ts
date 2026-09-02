@@ -1,14 +1,62 @@
-export type SubjectId = 'english' | 'mathematics' | 'science' | 'computer-studies' | 'world-languages';
+export type SubjectCategory = 'all' | 'sciences' | 'arts' | 'commercial' | 'languages' | 'primary' | 'global';
+
+export type SubjectId =
+  // Pure & Applied Sciences, Tech & Math
+  | 'mathematics'
+  | 'science'
+  | 'further-math'
+  | 'physics'
+  | 'chemistry'
+  | 'biology'
+  | 'agricultural-science'
+  | 'computer-studies'
+  | 'basic-technology'
+  | 'health-science'
+  // Arts, Humanities, Social & Religion
+  | 'english'
+  | 'literature'
+  | 'history'
+  | 'government-civics'
+  | 'islamic-studies'
+  | 'christian-studies'
+  | 'creative-arts'
+  | 'music'
+  | 'geography'
+  // Commercial & Business
+  | 'economics'
+  | 'accounting'
+  | 'commerce'
+  // Languages
+  | 'world-languages'
+  // Primary Foundations
+  | 'primary-math'
+  | 'primary-science'
+  | 'primary-english'
+  | 'social-studies';
 
 export type LevelDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
-export type ClassLevel = 'primary' | 'jss' | 'sss' | 'undergrad' | 'general';
+export type ClassLevel =
+  | 'lower-primary'
+  | 'upper-primary'
+  | 'jss1'
+  | 'jss2'
+  | 'jss3'
+  | 'ss1'
+  | 'ss2'
+  | 'ss3'
+  | 'primary' // legacy alias for all primary
+  | 'jss' // legacy alias for all jss
+  | 'sss' // legacy alias for all sss
+  | 'undergrad'
+  | 'general';
 
 export interface ClassDefinition {
   id: ClassLevel;
   name: string;
   shortName: string;
   gradeRange: string;
+  category: 'primary' | 'jss' | 'sss' | 'higher';
   description: string;
   icon: string;
   recommendedLevels: LevelDifficulty[];
@@ -16,47 +64,102 @@ export interface ClassDefinition {
 
 export const CLASS_LEVELS: ClassDefinition[] = [
   {
-    id: 'primary',
-    name: 'Primary / Elementary School',
-    shortName: 'Primary (Grades 1-6)',
-    gradeRange: 'Grades 1 - 6 / Basic 1 - 6',
-    description: 'Foundational arithmetic, fundamental grammar, introductory nature science, and beginning phonics.',
-    icon: '🎒',
+    id: 'lower-primary',
+    name: 'Lower Primary (Basic 1 - 3)',
+    shortName: 'Lower Primary (Grades 1-3)',
+    gradeRange: 'Basic 1 - 3 / Grades 1 - 3 (Ages 5-8)',
+    category: 'primary',
+    description: 'Foundational numeracy, phonics, simple reading, nature exploration, and introductory creative arts.',
+    icon: '🖍️',
     recommendedLevels: ['beginner'],
   },
   {
-    id: 'jss',
-    name: 'Junior Secondary School',
-    shortName: 'JSS (Grades 7-9)',
-    gradeRange: 'JSS 1 - 3 / Grades 7 - 9 / Middle School',
-    description: 'Pre-algebra, linear equations, introductory biology and chemistry, basic coding logic, and structured essays.',
+    id: 'upper-primary',
+    name: 'Upper Primary (Basic 4 - 6)',
+    shortName: 'Upper Primary (Grades 4-6)',
+    gradeRange: 'Basic 4 - 6 / Primary Leaving / Common Entrance',
+    category: 'primary',
+    description: 'Quantitative & verbal reasoning, basic science & technology, fractions, grammar, and social studies.',
+    icon: '🎒',
+    recommendedLevels: ['beginner', 'intermediate'],
+  },
+  {
+    id: 'jss1',
+    name: 'JSS 1 (Junior Secondary 1)',
+    shortName: 'JSS 1 (Grade 7 / Basic 7)',
+    gradeRange: 'Grade 7 / Basic 7 / Junior Secondary Year 1',
+    category: 'jss',
+    description: 'Algebraic terms, basic science principles, introduction to computer hardware & software, business studies.',
     icon: '📘',
     recommendedLevels: ['beginner', 'intermediate'],
   },
   {
-    id: 'sss',
-    name: 'Senior Secondary / High School',
-    shortName: 'SSS (Grades 10-12 / WAEC)',
-    gradeRange: 'SSS 1 - 3 / Grades 10 - 12 / WAEC / GCSE / SAT',
-    description: 'Quadratic functions, trigonometry, organic chemistry, physics kinematics, Python programming, and advanced rhetoric.',
-    icon: '🎓',
+    id: 'jss2',
+    name: 'JSS 2 (Junior Secondary 2)',
+    shortName: 'JSS 2 (Grade 8 / Basic 8)',
+    gradeRange: 'Grade 8 / Basic 8 / Junior Secondary Year 2',
+    category: 'jss',
+    description: 'Linear equations, living organisms & ecosystems, basic technology mechanisms, civic rights and duties.',
+    icon: '📗',
+    recommendedLevels: ['intermediate'],
+  },
+  {
+    id: 'jss3',
+    name: 'JSS 3 (Junior Secondary 3 / BECE)',
+    shortName: 'JSS 3 (Grade 9 / BECE Prep)',
+    gradeRange: 'Grade 9 / Basic 9 / BECE & Junior WAEC Exam Track',
+    category: 'jss',
+    description: 'Simultaneous equations, energy transformations, logic gates, literature analysis, and national values.',
+    icon: '📙',
     recommendedLevels: ['intermediate', 'advanced'],
+  },
+  {
+    id: 'ss1',
+    name: 'SS 1 (Senior Secondary 1)',
+    shortName: 'SS 1 (Grade 10 / High School 1)',
+    gradeRange: 'Grade 10 / Senior Secondary Year 1 (Science / Arts / Commercial)',
+    category: 'sss',
+    description: 'Quadratic equations, chemical bonding, mechanics in physics, cell biology, macroeconomics, and prose fiction.',
+    icon: '📐',
+    recommendedLevels: ['intermediate', 'advanced'],
+  },
+  {
+    id: 'ss2',
+    name: 'SS 2 (Senior Secondary 2)',
+    shortName: 'SS 2 (Grade 11 / High School 2)',
+    gradeRange: 'Grade 11 / Senior Secondary Year 2',
+    category: 'sss',
+    description: 'Trigonometry & circle theorems, organic chemistry, electric fields, genetics, government systems, and accounting.',
+    icon: '🔬',
+    recommendedLevels: ['intermediate', 'advanced'],
+  },
+  {
+    id: 'ss3',
+    name: 'SS 3 (Senior Secondary 3 / WAEC / JAMB / SAT)',
+    shortName: 'SS 3 (Grade 12 / WAEC & JAMB)',
+    gradeRange: 'Grade 12 / WASSCE, NECO, UTME/JAMB, GCSE, SAT Track',
+    category: 'sss',
+    description: 'Calculus, atomic physics, reaction kinetics, past questions drills, essay rhetoric, and comprehensive exam revision.',
+    icon: '🎓',
+    recommendedLevels: ['advanced'],
   },
   {
     id: 'undergrad',
     name: 'College & Undergraduate',
     shortName: 'College / University',
-    gradeRange: 'Higher Education / Tertiary',
-    description: 'Differential calculus, quantum physics, thermodynamics, data structures & algorithms, and comparative linguistics.',
+    gradeRange: 'Higher Education / Tertiary & Degree Studies',
+    category: 'higher',
+    description: 'Advanced calculus, quantum mechanics, organic synthesis, data structures & algorithms, and comparative economics.',
     icon: '🏛️',
     recommendedLevels: ['advanced'],
   },
   {
     id: 'general',
-    name: 'Lifelong & Independent Learner',
-    shortName: 'All Levels',
-    gradeRange: 'Self-Paced / All Ages',
-    description: 'Comprehensive access to all curricula across mathematics, science, language arts, and computer science.',
+    name: 'Lifelong World Learner',
+    shortName: 'All Classes & Subjects',
+    gradeRange: 'Universal Global Knowledge / Self-Paced',
+    category: 'higher',
+    description: 'Full unrestricted access to every subject in Science, Arts, Commercial, Languages, and Tech across all grades.',
     icon: '🌍',
     recommendedLevels: ['beginner', 'intermediate', 'advanced'],
   },
@@ -108,6 +211,8 @@ export interface Subject {
   title: string;
   tagline: string;
   description: string;
+  category?: SubjectCategory;
+  applicableClasses?: ClassLevel[];
   color: string;
   lightColor: string;
   borderColor: string;
@@ -190,7 +295,50 @@ export interface MathEquationSolution {
 
 export type MiniGameCategory = 'math' | 'science' | 'english' | 'code' | 'languages' | 'logic';
 
-export type AppView = 'home' | 'topics' | 'arcade' | 'subject' | 'lesson' | 'quiz' | 'ai-tutor' | 'dashboard' | 'leaderboard';
+export type AppView = 'home' | 'topics' | 'arcade' | 'subject' | 'lesson' | 'quiz' | 'ai-tutor' | 'dashboard' | 'leaderboard' | 'exam-prep';
+
+export type ExamTarget = 'waec' | 'jamb' | 'neco' | 'bece' | 'common-entrance' | 'sat-gcse' | 'class-termly' | 'universal';
+
+export interface ExamQuestion extends QuizQuestion {
+  yearOrSession?: string;
+  topicTag?: string;
+}
+
+export interface ExamPaper {
+  id: string;
+  title: string;
+  subtitle: string;
+  targetExam: ExamTarget;
+  targetClass: ClassLevel;
+  subjectId: SubjectId;
+  subjectName: string;
+  yearSession?: string;
+  durationMinutes: number;
+  totalMarks: number;
+  gradingScale: 'waec' | 'jamb' | 'percentage' | 'bece';
+  questions: ExamQuestion[];
+  instructions: string[];
+  badgeRewardId?: string;
+  xpReward: number;
+  coinReward: number;
+}
+
+export interface ExamAttemptRecord {
+  id: string;
+  paperId: string;
+  paperTitle: string;
+  subjectId: SubjectId;
+  targetExam: ExamTarget;
+  targetClass: ClassLevel;
+  score: number; // percentage e.g. 85
+  rawScore: number;
+  totalQuestions: number;
+  gradeFormatted: string; // e.g. "A1 (Distinction)" or "JAMB: 340/400"
+  timeSpentSeconds: number;
+  completedAt: string;
+  userAnswers: Record<number, number>; // question index -> chosen option index
+  aiEvaluationSummary?: string;
+}
 
 export interface MiniGame {
   id: string;

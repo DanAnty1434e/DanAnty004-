@@ -1,6 +1,6 @@
 {
   "name": "DanAnty004",
-  "description": "DanAnty004 Learning Platform invented by Aliyu Kamal Hamid. Featuring fast step-by-step math equation solver, class & academic level selection, 15 arcade mini-games, topic reading with 20 coin rewards, and AI tutoring across English, Mathematics, Science, Computer Studies, and Languages.",
+  "description": "DanAnty004 Universal Academy invented by Aliyu Kamal Hamid. Featuring all subjects across Primary (Basic 1-6), JSS 1-3, and SS 1-3 (Arts, Sciences, Commercial, Languages), WAEC/JAMB/BECE CBT exam prep, customizable study alarms with ringtones, instant math solver, 15 arcade games, and exact-answer AI tutoring.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

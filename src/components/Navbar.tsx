@@ -39,6 +39,7 @@ interface NavbarProps {
   onOpenMathSolver: () => void;
   onOpenAboutModal: () => void;
   onOpenAlarmModal: () => void;
+  onOpenExamPrep?: () => void;
   isEducatorMode: boolean;
   onToggleEducatorMode: () => void;
 }
@@ -54,6 +55,7 @@ export function Navbar({
   onOpenMathSolver,
   onOpenAboutModal,
   onOpenAlarmModal,
+  onOpenExamPrep,
   isEducatorMode,
   onToggleEducatorMode,
 }: NavbarProps) {
@@ -159,6 +161,22 @@ export function Navbar({
                 <Gamepad2 className="w-3.5 h-3.5 text-amber-600" />
                 <span>Arcade (15 Games)</span>
               </button>
+
+              {/* Exam Prep Button */}
+              {onOpenExamPrep && (
+                <button
+                  id="nav-exam-prep-btn"
+                  onClick={onOpenExamPrep}
+                  className="px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 transition-colors border border-indigo-200/80 bg-indigo-50/40"
+                  title="Prepare for WAEC, JAMB CBT, NECO, BECE & School Tests"
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Exam Prep</span>
+                  <span className="px-1 py-0.2 text-[8px] font-black bg-indigo-600 text-white rounded">
+                    CBT
+                  </span>
+                </button>
+              )}
 
               {/* Instant Math Solver Quick Button */}
               <button

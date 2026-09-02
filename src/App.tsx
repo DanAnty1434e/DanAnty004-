@@ -35,6 +35,7 @@ import { ClassSelectorModal } from './components/ClassSelectorModal';
 import { WelcomeAboutModal } from './components/WelcomeAboutModal';
 import { StudyAlarmModal } from './components/StudyAlarmModal';
 import { ActiveAlarmModal } from './components/ActiveAlarmModal';
+import { ExamTestPrepModal } from './components/ExamTestPrepModal';
 import {
   StudyAlarm,
   getSavedAlarms,
@@ -43,6 +44,7 @@ import {
 } from './utils/studyAlarmService';
 import { Sparkles, Trophy, X, Zap, WifiOff, Coins } from 'lucide-react';
 import { getLiveNetworkStatus } from './utils/networkManager';
+import { ExamAttemptRecord } from './types';
 
 export default function App() {
   const [progress, setProgress] = useState<UserProgress>(getSavedProgress);
@@ -54,6 +56,7 @@ export default function App() {
   const [isMathSolverOpen, setIsMathSolverOpen] = useState(false);
   const [isClassSelectorOpen, setIsClassSelectorOpen] = useState(false);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
   const [activeRingingAlarm, setActiveRingingAlarm] = useState<StudyAlarm | null>(null);
   const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(() => {
     try {
@@ -307,6 +310,29 @@ export default function App() {
     }
   };
 
+  // Handler for finishing an exam paper in the CBT Simulator
+  const handleCompleteExam = (record: ExamAttemptRecord) => {
+    // Reward XP & Coins for completing an exam
+    const earnedXp = Math.round((record.score / Math.max(record.totalQuestions, 1)) * 100) + 50;
+    const earnedCoins = 30; // High bonus coins for completing full mock/exam
+
+    const updated: UserProgress = {
+      ...progress,
+      xp: progress.xp + earnedXp,
+      todayXp: progress.todayXp + earnedXp,
+      coins: (progress.coins || 0) + earnedCoins,
+      examAttempts: [...(progress.examAttempts || []), record],
+    };
+    setProgress(updated);
+    try {
+      localStorage.setItem('dananty_user_progress_v1', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    showXpToast(earnedXp);
+    showCoinToast(earnedCoins);
+  };
+
   // Find active subject and active lesson objects
   const activeSubject = selectedSubjectId
     ? CURRICULUM_DATA.find((s) => s.id === selectedSubjectId) || CURRICULUM_DATA[0]
@@ -335,6 +361,7 @@ export default function App() {
         onOpenMathSolver={() => setIsMathSolverOpen(true)}
         onOpenAboutModal={() => setIsWelcomeOpen(true)}
         onOpenAlarmModal={() => setIsAlarmModalOpen(true)}
+        onOpenExamPrep={() => setIsExamModalOpen(true)}
         isEducatorMode={isEducatorMode}
         onToggleEducatorMode={() => setIsEducatorMode(!isEducatorMode)}
       />
@@ -407,6 +434,7 @@ export default function App() {
             onOpenClassSelector={() => setIsClassSelectorOpen(true)}
             onOpenAboutModal={() => setIsWelcomeOpen(true)}
             onOpenAlarmModal={() => setIsAlarmModalOpen(true)}
+            onOpenExamPrep={() => setIsExamModalOpen(true)}
           />
         )}
 
@@ -434,6 +462,7 @@ export default function App() {
               setActiveView('arcade');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onOpenExamPrep={() => setIsExamModalOpen(true)}
           />
         )}
 
@@ -583,6 +612,15 @@ export default function App() {
         isOpen={isAlarmModalOpen}
         onClose={() => setIsAlarmModalOpen(false)}
         onTriggerTestAlarm={(alarm) => setActiveRingingAlarm(alarm)}
+      />
+
+      {/* Official Exam & Test Prep CBT Simulation Modal */}
+      <ExamTestPrepModal
+        isOpen={isExamModalOpen}
+        onClose={() => setIsExamModalOpen(false)}
+        progress={progress}
+        onCompleteExam={handleCompleteExam}
+        onAskAI={handleAskAIWithContext}
       />
 
       {/* Active Ringing Alarm Screen Modal with Web Audio Synth */}
