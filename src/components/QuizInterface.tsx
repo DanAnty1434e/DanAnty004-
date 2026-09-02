@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Lesson, QuizAttempt, UserProgress } from '../types';
 import { speakText, stopSpeaking, isSpeechSynthesisSupported, playChimeSound } from '../utils/voiceAssistant';
+import { getInstantQuizFeedback } from '../utils/aiTutorService';
 
 interface QuizInterfaceProps {
   lesson: Lesson;
@@ -108,26 +109,22 @@ export function QuizInterface({
 
     setLoadingAiFeedback(true);
     try {
-      const res = await fetch('/api/gemini/quiz-feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: currentQuestion.question,
-          studentAnswer: currentQuestion.options[selectedIdx],
-          correctAnswer: currentQuestion.options[currentQuestion.correctIndex],
-          explanation: currentQuestion.explanation,
-        }),
+      const feedback = await getInstantQuizFeedback({
+        question: currentQuestion.question,
+        studentAnswer: currentQuestion.options[selectedIdx],
+        correctAnswer: currentQuestion.options[currentQuestion.correctIndex],
+        explanation: currentQuestion.explanation,
       });
-      const data = await res.json();
-      setAiExplanation({
-        ...aiExplanation,
-        [currentIdx]: data.customFeedback || currentQuestion.explanation,
-      });
-    } catch (e) {
-      setAiExplanation({
-        ...aiExplanation,
+
+      setAiExplanation((prev) => ({
+        ...prev,
+        [currentIdx]: feedback,
+      }));
+    } catch {
+      setAiExplanation((prev) => ({
+        ...prev,
         [currentIdx]: currentQuestion.explanation,
-      });
+      }));
     } finally {
       setLoadingAiFeedback(false);
     }

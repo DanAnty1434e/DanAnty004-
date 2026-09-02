@@ -4,6 +4,7 @@ import {
   UserProgress,
   QuizAttempt,
   UserInterestsProfile,
+  AppView,
 } from './types';
 import { CURRICULUM_DATA } from './data/curriculum';
 import { ALL_BADGES } from './data/badges';
@@ -24,19 +25,51 @@ import { QuizInterface } from './components/QuizInterface';
 import { AITutorSection } from './components/AITutorSection';
 import { ProgressDashboard } from './components/ProgressDashboard';
 import { GamificationLeaderboard } from './components/GamificationLeaderboard';
+import { SubjectTopicExplorer } from './components/SubjectTopicExplorer';
+import { ArcadeArena } from './components/ArcadeArena';
 import { SearchModal } from './components/SearchModal';
-import { Sparkles, Trophy, X, Zap } from 'lucide-react';
+import { QuickAIAssistant } from './components/QuickAIAssistant';
+import { NetworkDataManager } from './components/NetworkDataManager';
+import { MathSolverModal } from './components/MathSolverModal';
+import { ClassSelectorModal } from './components/ClassSelectorModal';
+import { WelcomeAboutModal } from './components/WelcomeAboutModal';
+import { Sparkles, Trophy, X, Zap, WifiOff, Coins } from 'lucide-react';
+import { getLiveNetworkStatus } from './utils/networkManager';
 
 export default function App() {
   const [progress, setProgress] = useState<UserProgress>(getSavedProgress);
-  const [activeView, setActiveView] = useState<'home' | 'subject' | 'lesson' | 'quiz' | 'ai-tutor' | 'dashboard' | 'leaderboard'>('home');
+  const [activeView, setActiveView] = useState<AppView>('home');
   const [selectedSubjectId, setSelectedSubjectId] = useState<SubjectId | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNetworkManagerOpen, setIsNetworkManagerOpen] = useState(false);
+  const [isMathSolverOpen, setIsMathSolverOpen] = useState(false);
+  const [isClassSelectorOpen, setIsClassSelectorOpen] = useState(false);
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(() => {
+    try {
+      const seen = localStorage.getItem('dananty_has_seen_welcome_v1');
+      return !seen;
+    } catch {
+      return true;
+    }
+  });
   const [isEducatorMode, setIsEducatorMode] = useState(false);
   const [aiContext, setAiContext] = useState<{ question?: string; contextTitle?: string }>({});
   const [toastBadge, setToastBadge] = useState<string | null>(null);
   const [toastXp, setToastXp] = useState<number | null>(null);
+  const [toastCoins, setToastCoins] = useState<number | null>(null);
+  const [isOfflineNotice, setIsOfflineNotice] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOfflineNotice(false);
+    const handleOffline = () => setIsOfflineNotice(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Global shortcut for Cmd/Ctrl + K to open search
   useEffect(() => {
@@ -53,6 +86,16 @@ export default function App() {
   const showXpToast = (amount: number) => {
     setToastXp(amount);
     setTimeout(() => setToastXp(null), 3000);
+  };
+
+  const showCoinsToast = (amount: number) => {
+    setToastCoins(amount);
+    setTimeout(() => setToastCoins(null), 3000);
+  };
+
+  const showBadgeToast = (badgeTitle: string) => {
+    setToastBadge(badgeTitle);
+    setTimeout(() => setToastBadge(null), 4000);
   };
 
   // Handlers for subject navigation
@@ -94,15 +137,15 @@ export default function App() {
     const targetLesson = allLessons.find((l) => l.id === lessonId);
     const xpReward = targetLesson ? targetLesson.xpReward : 50;
 
-    const { updated, newBadges, gainedXp } = recordLessonCompletion(progress, lessonId, xpReward);
+    const { updated, newBadges, gainedXp, gainedCoins } = recordLessonCompletion(progress, lessonId, xpReward);
     setProgress(updated);
     showXpToast(gainedXp);
+    showCoinsToast(gainedCoins);
 
     if (newBadges.length > 0) {
       const badgeObj = ALL_BADGES.find((b) => b.id === newBadges[0]);
       if (badgeObj) {
-        setToastBadge(badgeObj.title);
-        setTimeout(() => setToastBadge(null), 4000);
+        showBadgeToast(badgeObj.title);
       }
     }
 
@@ -154,6 +197,20 @@ export default function App() {
     setProgress(updated);
   };
 
+  // Handler for updating selected academic class level
+  const handleSelectClass = (classId: string) => {
+    const updated: UserProgress = {
+      ...progress,
+      selectedClass: classId as any,
+    };
+    setProgress(updated);
+    try {
+      localStorage.setItem('dananty_user_progress_v1', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // Find active subject and active lesson objects
   const activeSubject = selectedSubjectId
     ? CURRICULUM_DATA.find((s) => s.id === selectedSubjectId) || CURRICULUM_DATA[0]
@@ -177,15 +234,44 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenNetworkManager={() => setIsNetworkManagerOpen(true)}
+        onOpenClassSelector={() => setIsClassSelectorOpen(true)}
+        onOpenMathSolver={() => setIsMathSolverOpen(true)}
+        onOpenAboutModal={() => setIsWelcomeOpen(true)}
         isEducatorMode={isEducatorMode}
         onToggleEducatorMode={() => setIsEducatorMode(!isEducatorMode)}
       />
 
-      {/* Badge & XP Unlock Notification Toasts */}
+      {/* Offline / Data Notice Banner */}
+      {isOfflineNotice && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-xs">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <WifiOff className="w-4 h-4" />
+              <span>Offline Mode Active — All 5 subjects, 25 lessons & instant AI engine are cached locally and 100% accessible!</span>
+            </div>
+            <button
+              onClick={() => setIsNetworkManagerOpen(true)}
+              className="px-2.5 py-0.5 rounded-lg bg-slate-950 text-white text-[11px] font-bold hover:bg-slate-800 transition"
+            >
+              Network Options
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Badge, XP & Coin Unlock Notification Toasts */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none">
+        {toastCoins !== null && (
+          <div className="p-3.5 px-4 rounded-2xl bg-amber-400 text-slate-950 shadow-xl border border-amber-300 font-black text-xs flex items-center space-x-2 animate-in slide-in-from-bottom-3 duration-300 pointer-events-auto">
+            <Coins className="w-4 h-4 text-slate-950" />
+            <span>+{toastCoins} Coins Earned for Studying! 🪙</span>
+          </div>
+        )}
+
         {toastXp !== null && (
-          <div className="p-3.5 px-4 rounded-2xl bg-amber-500 text-slate-950 shadow-xl border border-amber-400 font-bold text-xs flex items-center space-x-2 animate-in slide-in-from-bottom-3 duration-300 pointer-events-auto">
-            <Zap className="w-4 h-4 fill-slate-950" />
+          <div className="p-3.5 px-4 rounded-2xl bg-slate-900 text-white shadow-xl border border-slate-800 font-bold text-xs flex items-center space-x-2 animate-in slide-in-from-bottom-3 duration-300 pointer-events-auto">
+            <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
             <span>+{toastXp} XP Earned!</span>
           </div>
         )}
@@ -218,10 +304,57 @@ export default function App() {
             onSelectSubject={handleSelectSubject}
             onSelectLesson={handleSelectLesson}
             onOpenAITutor={() => setActiveView('ai-tutor')}
+            onOpenTopics={() => setActiveView('topics')}
+            onOpenArcade={() => setActiveView('arcade')}
+            onOpenMathSolver={() => setIsMathSolverOpen(true)}
+            onOpenClassSelector={() => setIsClassSelectorOpen(true)}
+            onOpenAboutModal={() => setIsWelcomeOpen(true)}
           />
         )}
 
-        {/* VIEW 2: Subject Detail View */}
+        {/* VIEW 2: Subject & Topic Explorer */}
+        {activeView === 'topics' && (
+          <SubjectTopicExplorer
+            progress={progress}
+            selectedSubjectId={selectedSubjectId || 'all'}
+            onSelectTopic={(subject, lesson) => {
+              setSelectedSubjectId(subject.id);
+              setSelectedLessonId(lesson.id);
+              setActiveView('lesson');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onTakeQuiz={(subject, lesson) => {
+              setSelectedSubjectId(subject.id);
+              setSelectedLessonId(lesson.id);
+              setActiveView('quiz');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onAskAIAboutTopic={(subject, lesson) => {
+              handleAskAIWithContext(`Can you explain ${lesson.title} in ${subject.title}?`, `${subject.title} - ${lesson.title}`);
+            }}
+            onNavigateToArcade={() => {
+              setActiveView('arcade');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {/* VIEW 3: Arcade 15 Mini-Games Arena */}
+        {activeView === 'arcade' && (
+          <ArcadeArena
+            progress={progress}
+            onUpdateProgress={(updated) => setProgress(updated)}
+            onNavigateToTopics={(subjId) => {
+              if (subjId) setSelectedSubjectId(subjId);
+              setActiveView('topics');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onShowXpToast={showXpToast}
+            onShowBadgeToast={showBadgeToast}
+          />
+        )}
+
+        {/* VIEW 4: Subject Detail View */}
         {activeView === 'subject' && activeSubject && (
           <SubjectDetailView
             subject={activeSubject}
@@ -235,7 +368,7 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 3: Interactive Lesson Viewer */}
+        {/* VIEW 5: Interactive Lesson Viewer */}
         {activeView === 'lesson' && activeLesson && activeSubject && (
           <LessonViewer
             lesson={activeLesson}
@@ -254,7 +387,7 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 4: Quiz Assessment Interface */}
+        {/* VIEW 6: Quiz Assessment Interface */}
         {activeView === 'quiz' && activeLesson && (
           <QuizInterface
             lesson={activeLesson}
@@ -265,17 +398,18 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 5: Dedicated AI Q&A Tutor */}
+        {/* VIEW 7: Dedicated AI Q&A Tutor */}
         {activeView === 'ai-tutor' && (
           <AITutorSection
             initialSubject={selectedSubjectId}
             initialQuestion={aiContext.question}
             contextLessonTitle={aiContext.contextTitle}
             onClearInitialContext={() => setAiContext({})}
+            onOpenMathSolver={() => setIsMathSolverOpen(true)}
           />
         )}
 
-        {/* VIEW 6: Progress & Educator Analytics Dashboard */}
+        {/* VIEW 8: Progress & Educator Analytics Dashboard */}
         {activeView === 'dashboard' && (
           <ProgressDashboard
             progress={progress}
@@ -286,7 +420,7 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 7: Gamification Leaderboard & Badges Showcase */}
+        {/* VIEW 9: Gamification Leaderboard & Badges Showcase */}
         {activeView === 'leaderboard' && (
           <div className="max-w-5xl mx-auto space-y-6 pb-12">
             <GamificationLeaderboard
@@ -297,12 +431,74 @@ export default function App() {
         )}
       </main>
 
+      {/* Ultra-Fast Mathematics Equation Solver Modal */}
+      <MathSolverModal
+        isOpen={isMathSolverOpen}
+        onClose={() => setIsMathSolverOpen(false)}
+        onEarnXp={(amount) => showXpToast(amount)}
+      />
+
+      {/* Academic Class & Level Selector Modal */}
+      <ClassSelectorModal
+        isOpen={isClassSelectorOpen}
+        onClose={() => setIsClassSelectorOpen(false)}
+        currentClass={progress.selectedClass || 'sss'}
+        onSelectClass={handleSelectClass}
+      />
+
+      {/* Onboarding & Creator Attribution Welcome Modal (Auto-pops up for first-time visitors) */}
+      <WelcomeAboutModal
+        isOpen={isWelcomeOpen}
+        onClose={() => {
+          setIsWelcomeOpen(false);
+          try {
+            localStorage.setItem('dananty_has_seen_welcome_v1', 'true');
+          } catch {}
+        }}
+        currentClass={progress.selectedClass || 'sss'}
+        onSelectClass={handleSelectClass}
+        onOpenMathSolver={() => {
+          setIsWelcomeOpen(false);
+          try {
+            localStorage.setItem('dananty_has_seen_welcome_v1', 'true');
+          } catch {}
+          setIsMathSolverOpen(true);
+        }}
+      />
+
       {/* Global Search Modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onSelectLesson={handleSelectLesson}
         onSelectSubject={handleSelectSubject}
+      />
+
+      {/* Global Network & Data Manager Modal */}
+      <NetworkDataManager
+        isOpen={isNetworkManagerOpen}
+        onClose={() => setIsNetworkManagerOpen(false)}
+      />
+
+      {/* Global Instant AI Floating Assistant (Available Across All Views, Shift+A) */}
+      <QuickAIAssistant
+        currentSubjectId={selectedSubjectId}
+        currentLessonTitle={
+          selectedLessonId
+            ? CURRICULUM_DATA.flatMap((s) => s.lessons).find((l) => l.id === selectedLessonId)?.title
+            : undefined
+        }
+        onRecordQuestion={() => {
+          const { updated, newBadges } = recordAiQuestion(progress);
+          setProgress(updated);
+          if (newBadges.length > 0) {
+            const badgeObj = ALL_BADGES.find((b) => b.id === newBadges[0]);
+            if (badgeObj) {
+              setToastBadge(badgeObj.title);
+              setTimeout(() => setToastBadge(null), 4000);
+            }
+          }
+        }}
       />
 
       {/* Clean Modern Footer */}
@@ -317,6 +513,8 @@ export default function App() {
 
           <div className="flex items-center space-x-4">
             <button onClick={() => setActiveView('home')} className="hover:text-slate-900 transition">Subjects</button>
+            <button onClick={() => setActiveView('topics')} className="hover:text-slate-900 transition">Topics (+20 🪙)</button>
+            <button onClick={() => setActiveView('arcade')} className="hover:text-slate-900 transition">Arcade (15 Games)</button>
             <button onClick={() => setActiveView('ai-tutor')} className="hover:text-slate-900 transition">AI Tutor</button>
             <button onClick={() => setActiveView('leaderboard')} className="hover:text-slate-900 transition">Leaderboard</button>
             <button onClick={() => setActiveView('dashboard')} className="hover:text-slate-900 transition">Dashboard</button>

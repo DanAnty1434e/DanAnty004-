@@ -12,6 +12,8 @@ export const DEFAULT_INTERESTS: UserInterestsProfile = {
 const DEFAULT_PROGRESS: UserProgress = {
   xp: 280,
   level: 2,
+  coins: 40,
+  gamesPlayed: 0,
   streakDays: 3,
   lastActiveDate: new Date().toISOString().split('T')[0],
   completedLessons: ['eng-101', 'math-101'],
@@ -93,12 +95,15 @@ export function getSavedProgress(): UserProgress {
 
     const xp = parsed.xp || 0;
     const level = Math.floor(xp / 150) + 1;
+    const coins = typeof parsed.coins === 'number' ? parsed.coins : 40;
     
     const loaded: UserProgress = {
       ...DEFAULT_PROGRESS,
       ...parsed,
       xp,
       level,
+      coins,
+      gamesPlayed: parsed.gamesPlayed || 0,
       streakDays,
       todayXp: lastActive === today ? (parsed.todayXp || 0) : 0,
       lastActiveDate: today,
@@ -238,21 +243,24 @@ function checkAllEligibleBadges(progress: UserProgress): { newBadges: string[]; 
   return { newBadges: newlyUnlocked, totalBonusXp };
 }
 
-export function recordLessonCompletion(progress: UserProgress, lessonId: string, xpReward: number): { updated: UserProgress; newBadges: string[]; gainedXp: number } {
+export function recordLessonCompletion(progress: UserProgress, lessonId: string, xpReward: number): { updated: UserProgress; newBadges: string[]; gainedXp: number; gainedCoins: number } {
   const isAlreadyCompleted = progress.completedLessons.includes(lessonId);
   const baseReward = isAlreadyCompleted ? 15 : xpReward;
   
   // Streak multiplier (1.2x if streak >= 3)
   const multiplier = progress.streakDays >= 3 ? 1.2 : 1.0;
   const gainedXp = Math.round(baseReward * multiplier);
+  const gainedCoins = 20; // 20 Coins earned for reading/completing subject topic
 
   const newCompleted = isAlreadyCompleted ? progress.completedLessons : [...progress.completedLessons, lessonId];
   let newXp = progress.xp + gainedXp;
   let newTodayXp = (progress.todayXp || 0) + gainedXp;
+  const newCoins = (progress.coins || 0) + gainedCoins;
 
   const tempProgress: UserProgress = {
     ...progress,
     xp: newXp,
+    coins: newCoins,
     completedLessons: newCompleted,
     todayXp: newTodayXp,
   };
@@ -271,7 +279,7 @@ export function recordLessonCompletion(progress: UserProgress, lessonId: string,
   };
 
   saveUserProgress(updated);
-  return { updated, newBadges, gainedXp: gainedXp + totalBonusXp };
+  return { updated, newBadges, gainedXp: gainedXp + totalBonusXp, gainedCoins };
 }
 
 export function recordQuizAttempt(progress: UserProgress, attempt: QuizAttempt): { updated: UserProgress; earnedXp: number; newBadges: string[] } {
@@ -393,5 +401,91 @@ export function toggleBookmark(progress: UserProgress, lessonId: string): UserPr
   const updated = { ...progress, bookmarks };
   saveUserProgress(updated);
   return updated;
+}
+
+export function recordTopicStudyCompletion(progress: UserProgress, topicIdOrLessonId: string, coinAmount: number = 20): { updated: UserProgress; gainedCoins: number; gainedXp: number; newBadges: string[] } {
+  const gainedCoins = coinAmount; // 20 coins per subject topic read
+  const gainedXp = 35;
+  const isAlreadyCompleted = progress.completedLessons.includes(topicIdOrLessonId);
+  const newCompleted = isAlreadyCompleted ? progress.completedLessons : [...progress.completedLessons, topicIdOrLessonId];
+  
+  let newXp = progress.xp + gainedXp;
+  let newTodayXp = (progress.todayXp || 0) + gainedXp;
+  const newCoins = (progress.coins || 0) + gainedCoins;
+
+  const tempProgress: UserProgress = {
+    ...progress,
+    xp: newXp,
+    coins: newCoins,
+    completedLessons: newCompleted,
+    todayXp: newTodayXp,
+  };
+
+  const { newBadges, totalBonusXp } = checkAllEligibleBadges(tempProgress);
+  newXp += totalBonusXp;
+  newTodayXp += totalBonusXp;
+  const newLevel = Math.floor(newXp / 150) + 1;
+
+  const updated: UserProgress = {
+    ...tempProgress,
+    xp: newXp,
+    level: newLevel,
+    todayXp: newTodayXp,
+    badges: [...progress.badges, ...newBadges],
+  };
+
+  saveUserProgress(updated);
+  return { updated, gainedCoins, gainedXp: gainedXp + totalBonusXp, newBadges };
+}
+
+export function spendCoinsForGame(progress: UserProgress, cost: number = 10): { success: boolean; updated: UserProgress; remainingCoins: number } {
+  const currentCoins = progress.coins || 0;
+  if (currentCoins < cost) {
+    return { success: false, updated: progress, remainingCoins: currentCoins };
+  }
+  const newCoins = currentCoins - cost;
+  const updated: UserProgress = {
+    ...progress,
+    coins: newCoins,
+    gamesPlayed: (progress.gamesPlayed || 0) + 1,
+  };
+  saveUserProgress(updated);
+  return { success: true, updated, remainingCoins: newCoins };
+}
+
+export function recordGameResult(
+  progress: UserProgress,
+  gameId: string,
+  rewardCoins: number = 5,
+  rewardXp: number = 25
+): { updated: UserProgress; earnedCoins: number; earnedXp: number; newBadges: string[] } {
+  let newCoins = (progress.coins || 0) + rewardCoins;
+  let newXp = progress.xp + rewardXp;
+  let newTodayXp = (progress.todayXp || 0) + rewardXp;
+
+  const tempProgress: UserProgress = {
+    ...progress,
+    coins: newCoins,
+    xp: newXp,
+    todayXp: newTodayXp,
+    gamesPlayed: (progress.gamesPlayed || 0),
+  };
+
+  const { newBadges, totalBonusXp } = checkAllEligibleBadges(tempProgress);
+  newXp += totalBonusXp;
+  newTodayXp += totalBonusXp;
+  const newLevel = Math.floor(newXp / 150) + 1;
+
+  const updated: UserProgress = {
+    ...tempProgress,
+    coins: newCoins,
+    xp: newXp,
+    level: newLevel,
+    todayXp: newTodayXp,
+    badges: [...progress.badges, ...newBadges],
+  };
+
+  saveUserProgress(updated);
+  return { updated, earnedCoins: rewardCoins, earnedXp: rewardXp + totalBonusXp, newBadges };
 }
 

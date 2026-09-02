@@ -18,6 +18,7 @@ import {
   Play,
   Pause,
   RotateCcw,
+  Coins,
 } from 'lucide-react';
 import { Lesson, Subject, UserProgress } from '../types';
 import { CodePlayground } from './InteractiveWidgets/CodePlayground';
@@ -25,6 +26,8 @@ import { MathGrapher } from './InteractiveWidgets/MathGrapher';
 import { LanguageAudioCard } from './InteractiveWidgets/LanguageAudioCard';
 import { GrammarBuilderWidget } from './InteractiveWidgets/GrammarBuilderWidget';
 import { speakText, stopSpeaking, isSpeechSynthesisSupported } from '../utils/voiceAssistant';
+import { streamTutorResponse } from '../utils/aiTutorService';
+import { Copy, Check } from 'lucide-react';
 
 interface LessonViewerProps {
   lesson: Lesson;
@@ -52,6 +55,13 @@ export function LessonViewer({
   const [activeNarratingSection, setActiveNarratingSection] = useState<number | null>(null);
   const [speechRate, setSpeechRate] = useState<number>(1.0);
 
+  // In-Lesson Instant AI Q&A Streaming State
+  const [inLessonAnswer, setInLessonAnswer] = useState<string | null>(null);
+  const [inLessonStreaming, setInLessonStreaming] = useState(false);
+  const [inLessonPrompt, setInLessonPrompt] = useState<string | null>(null);
+  const [isSpeakingInLessonAi, setIsSpeakingInLessonAi] = useState(false);
+  const [hasCopiedInLessonAi, setHasCopiedInLessonAi] = useState(false);
+
   const isBookmarked = progress.bookmarks.includes(lesson.id);
   const isCompleted = progress.completedLessons.includes(lesson.id);
 
@@ -61,11 +71,32 @@ export function LessonViewer({
     };
   }, [lesson.id]);
 
-  const handleAskQuickAI = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickQuestion.trim()) return;
-    onAskAI(quickQuestion, `${subject.title} - ${lesson.title}`);
+  const handleAskQuickAI = async (questionText: string) => {
+    const text = questionText.trim();
+    if (!text || inLessonStreaming) return;
+
+    setInLessonPrompt(text);
+    setInLessonAnswer('');
+    setInLessonStreaming(true);
     setQuickQuestion('');
+
+    await streamTutorResponse({
+      question: text,
+      subject: subject.id,
+      level: lesson.level,
+      context: `${subject.title} - ${lesson.title}`,
+      onChunk: (_chunk, accumulated) => {
+        setInLessonAnswer(accumulated);
+      },
+      onComplete: (fullText) => {
+        setInLessonAnswer(fullText);
+        setInLessonStreaming(false);
+      },
+      onError: (errMsg) => {
+        setInLessonAnswer(`⚠️ ${errMsg || 'Could not fetch explanation. Please try again.'}`);
+        setInLessonStreaming(false);
+      },
+    });
   };
 
   const handleToggleFullLessonVoice = () => {
@@ -244,6 +275,10 @@ export function LessonViewer({
             <Zap className="w-3.5 h-3.5 fill-amber-500" />
             <span>+{lesson.xpReward} XP</span>
           </span>
+          <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100/80 text-amber-800 border border-amber-300">
+            <Coins className="w-3 h-3 text-amber-600" />
+            <span>+20 Coins on Read/Completion</span>
+          </span>
           {isCompleted && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <CheckCircle2 className="w-3 h-3" /> Completed
@@ -379,49 +414,138 @@ export function LessonViewer({
           </div>
         </div>
 
-        <form onSubmit={handleAskQuickAI} className="relative z-10 flex gap-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAskQuickAI(quickQuestion);
+          }}
+          className="relative z-10 flex gap-2"
+        >
           <input
             id="quick-ai-question-input"
             type="text"
             value={quickQuestion}
             onChange={(e) => setQuickQuestion(e.target.value)}
-            placeholder={`Ask a question about ${lesson.title}...`}
+            placeholder={`Ask any doubt about ${lesson.title}...`}
             className="flex-1 px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-indigo-200 text-xs sm:text-sm focus:outline-none focus:bg-white/20 transition-colors"
           />
           <button
             id="submit-quick-ai-btn"
             type="submit"
-            className="flex items-center space-x-1.5 px-5 py-3 bg-white text-indigo-600 hover:bg-indigo-50 font-bold text-xs sm:text-sm rounded-2xl transition-colors shadow-sm shrink-0"
+            disabled={inLessonStreaming || !quickQuestion.trim()}
+            className="flex items-center space-x-1.5 px-5 py-3 bg-white text-indigo-600 hover:bg-indigo-50 font-bold text-xs sm:text-sm rounded-2xl transition-colors shadow-sm shrink-0 disabled:opacity-50"
           >
-            <span>Ask</span>
+            <span>{inLessonStreaming ? 'Thinking...' : 'Ask Instant'}</span>
             <Send className="w-3.5 h-3.5" />
           </button>
         </form>
 
-        <div className="relative z-10 flex flex-wrap gap-2 text-[11px] text-indigo-100">
+        <div className="relative z-10 flex flex-wrap gap-2 text-[11px] text-indigo-100 items-center">
           <span className="font-semibold text-white">Suggested:</span>
           <button
             type="button"
-            onClick={() => onAskAI(`Explain ${lesson.title} in simple terms with a real-world story`, lesson.title)}
-            className="hover:underline text-indigo-100"
+            onClick={() => handleAskQuickAI(`Explain ${lesson.title} in simple terms with a real-world story`)}
+            className="hover:underline text-indigo-100 bg-white/10 px-2 py-0.5 rounded-lg"
           >
-            &quot;Explain this in simple terms&quot;
+            &quot;Explain in simple terms&quot;
           </button>
-          <span>•</span>
           <button
             type="button"
-            onClick={() => onAskAI(`Give me 3 practice exercises for ${lesson.title}`, lesson.title)}
-            className="hover:underline text-indigo-100"
+            onClick={() => handleAskQuickAI(`Give me 2 practical test examples for ${lesson.title}`)}
+            className="hover:underline text-indigo-100 bg-white/10 px-2 py-0.5 rounded-lg"
           >
-            &quot;Give me 3 practice exercises&quot;
+            &quot;Give me 2 practical examples&quot;
           </button>
         </div>
+
+        {/* In-Lesson AI Response Box */}
+        {(inLessonAnswer !== null || inLessonStreaming) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative z-10 p-5 rounded-2xl bg-white text-slate-900 shadow-lg space-y-3 mt-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center space-x-2 text-xs font-bold text-indigo-600">
+                <Bot className="w-4 h-4" />
+                <span>Instant AI Explanation for: &ldquo;{inLessonPrompt}&rdquo;</span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                ⚡ 0-Wait Response
+              </span>
+            </div>
+
+            <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line text-slate-800 font-normal">
+              {inLessonAnswer || (
+                <span className="inline-flex items-center space-x-1 text-slate-400">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]" />
+                  <span className="text-xs ml-1.5 font-medium text-indigo-600">Streaming answer immediately...</span>
+                </span>
+              )}
+            </div>
+
+            {inLessonAnswer && (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      if (!isSpeechSynthesisSupported()) return;
+                      if (isSpeakingInLessonAi) {
+                        stopSpeaking();
+                        setIsSpeakingInLessonAi(false);
+                      } else {
+                        stopSpeaking();
+                        const clean = inLessonAnswer.replace(/[*#`_]/g, '');
+                        speakText(clean, {
+                          onStart: () => setIsSpeakingInLessonAi(true),
+                          onEnd: () => setIsSpeakingInLessonAi(false),
+                          onError: () => setIsSpeakingInLessonAi(false),
+                        });
+                      }
+                    }}
+                    className="flex items-center space-x-1 text-slate-600 hover:text-indigo-600 font-semibold"
+                  >
+                    {isSpeakingInLessonAi ? <VolumeX className="w-3.5 h-3.5 text-rose-500" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span>{isSpeakingInLessonAi ? 'Stop Audio' : 'Listen'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(inLessonAnswer);
+                      setHasCopiedInLessonAi(true);
+                      setTimeout(() => setHasCopiedInLessonAi(false), 2000);
+                    }}
+                    className="flex items-center space-x-1 text-slate-600 hover:text-indigo-600 font-semibold"
+                  >
+                    {hasCopiedInLessonAi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{hasCopiedInLessonAi ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => onAskAI(inLessonPrompt || '', `${subject.title} - ${lesson.title}`)}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline"
+                >
+                  Continue in Full AI Tutor →
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Lesson Footer & Take Quiz CTA */}
       <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="space-y-1">
-          <span className="text-xs text-indigo-400 font-bold uppercase tracking-wider block">Ready to test your knowledge?</span>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-indigo-400 font-bold uppercase tracking-wider block">Ready to test your knowledge?</span>
+            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950 font-mono">
+              <Coins className="w-3 h-3" />
+              <span>+20 Coins</span>
+            </span>
+          </div>
           <h4 className="text-lg font-bold text-white font-['Outfit',sans-serif]">Lesson Assessment & Interactive Quiz</h4>
         </div>
 
@@ -433,7 +557,7 @@ export function LessonViewer({
           }}
           className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
         >
-          <span>Take Quiz ({lesson.quiz.length} Questions)</span>
+          <span>Complete & Take Quiz (+20 🪙)</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

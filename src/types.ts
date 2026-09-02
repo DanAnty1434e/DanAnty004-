@@ -2,6 +2,66 @@ export type SubjectId = 'english' | 'mathematics' | 'science' | 'computer-studie
 
 export type LevelDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
+export type ClassLevel = 'primary' | 'jss' | 'sss' | 'undergrad' | 'general';
+
+export interface ClassDefinition {
+  id: ClassLevel;
+  name: string;
+  shortName: string;
+  gradeRange: string;
+  description: string;
+  icon: string;
+  recommendedLevels: LevelDifficulty[];
+}
+
+export const CLASS_LEVELS: ClassDefinition[] = [
+  {
+    id: 'primary',
+    name: 'Primary / Elementary School',
+    shortName: 'Primary (Grades 1-6)',
+    gradeRange: 'Grades 1 - 6 / Basic 1 - 6',
+    description: 'Foundational arithmetic, fundamental grammar, introductory nature science, and beginning phonics.',
+    icon: '🎒',
+    recommendedLevels: ['beginner'],
+  },
+  {
+    id: 'jss',
+    name: 'Junior Secondary School',
+    shortName: 'JSS (Grades 7-9)',
+    gradeRange: 'JSS 1 - 3 / Grades 7 - 9 / Middle School',
+    description: 'Pre-algebra, linear equations, introductory biology and chemistry, basic coding logic, and structured essays.',
+    icon: '📘',
+    recommendedLevels: ['beginner', 'intermediate'],
+  },
+  {
+    id: 'sss',
+    name: 'Senior Secondary / High School',
+    shortName: 'SSS (Grades 10-12 / WAEC)',
+    gradeRange: 'SSS 1 - 3 / Grades 10 - 12 / WAEC / GCSE / SAT',
+    description: 'Quadratic functions, trigonometry, organic chemistry, physics kinematics, Python programming, and advanced rhetoric.',
+    icon: '🎓',
+    recommendedLevels: ['intermediate', 'advanced'],
+  },
+  {
+    id: 'undergrad',
+    name: 'College & Undergraduate',
+    shortName: 'College / University',
+    gradeRange: 'Higher Education / Tertiary',
+    description: 'Differential calculus, quantum physics, thermodynamics, data structures & algorithms, and comparative linguistics.',
+    icon: '🏛️',
+    recommendedLevels: ['advanced'],
+  },
+  {
+    id: 'general',
+    name: 'Lifelong & Independent Learner',
+    shortName: 'All Levels',
+    gradeRange: 'Self-Paced / All Ages',
+    description: 'Comprehensive access to all curricula across mathematics, science, language arts, and computer science.',
+    icon: '🌍',
+    recommendedLevels: ['beginner', 'intermediate', 'advanced'],
+  },
+];
+
 export type BadgeCategory = 'subject-mastery' | 'streak-dedication' | 'quiz-performance' | 'special-milestones';
 export type BadgeTier = 'bronze' | 'silver' | 'gold' | 'diamond';
 export type LeagueTier = 'Bronze' | 'Silver' | 'Gold' | 'Diamond' | 'Master';
@@ -93,6 +153,7 @@ export interface UserInterestsProfile {
 export interface UserProgress {
   xp: number;
   level: number;
+  coins: number; // Token balance (earn 20 per topic read, spend 10 to play games)
   streakDays: number;
   lastActiveDate: string;
   completedLessons: string[]; // lesson ids
@@ -102,9 +163,49 @@ export interface UserProgress {
   bookmarks: string[]; // lesson ids
   dailyGoalXp: number;
   todayXp: number;
+  selectedClass?: ClassLevel;
   interestsProfile?: UserInterestsProfile;
   aiQuestionsAsked?: number;
   widgetsInteracted?: number;
+  gamesPlayed?: number;
+}
+
+export interface MathStep {
+  stepNumber: number;
+  title: string;
+  expression?: string;
+  explanation: string;
+}
+
+export interface MathEquationSolution {
+  equation: string;
+  equationType: string;
+  methodName: string;
+  formulaUsed?: string;
+  steps: MathStep[];
+  finalAnswer: string;
+  verification?: string;
+  tips?: string;
+}
+
+export type MiniGameCategory = 'math' | 'science' | 'english' | 'code' | 'languages' | 'logic';
+
+export type AppView = 'home' | 'topics' | 'arcade' | 'subject' | 'lesson' | 'quiz' | 'ai-tutor' | 'dashboard' | 'leaderboard';
+
+export interface MiniGame {
+  id: string;
+  title: string;
+  subjectId: SubjectId;
+  subjectName: string;
+  description: string;
+  iconName: string;
+  category: MiniGameCategory;
+  difficulty: LevelDifficulty;
+  coinCost: number; // 10 coins
+  rewardCoins: number; // e.g. 5-15 bonus coins on win
+  rewardXp: number; // e.g. 30 XP
+  color: string;
+  howToPlay: string;
 }
 
 export interface LeaderboardEntry {
@@ -150,5 +251,27 @@ export interface ChatMessage {
   subject?: SubjectId;
   timestamp: string;
   isAudioPlaying?: boolean;
+  dataBytes?: number;
+}
+
+export type NetworkConnectionType = '5g' | '4g' | '3g' | '2g' | 'slow-2g' | 'wifi' | 'offline';
+export type DataSaverMode = 'auto' | 'standard' | 'data-saver' | 'ultra-saver' | 'offline-only';
+
+export interface NetworkStatus {
+  isOnline: boolean;
+  effectiveType: NetworkConnectionType;
+  downlinkMbps: number;
+  rttMs: number;
+  saveDataEnabled: boolean;
+  mode: DataSaverMode;
+}
+
+export interface DataUsageStats {
+  bytesReceived: number;
+  bytesSent: number;
+  bytesSaved: number;
+  requestsCount: number;
+  offlineResponsesCount: number;
+  lastReset: string;
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "DanAnty004",
-  "description": "An interactive educational learning platform featuring English, Mathematics, Science, Computer Studies, and World Languages with quizzes, AI tutoring, and progress tracking.",
+  "description": "DanAnty004 Learning Platform invented by Aliyu Kamal Hamid. Featuring fast step-by-step math equation solver, class & academic level selection, 15 arcade mini-games, topic reading with 20 coin rewards, and AI tutoring across English, Mathematics, Science, Computer Studies, and Languages.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

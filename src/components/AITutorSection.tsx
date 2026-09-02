@@ -15,19 +15,26 @@ import {
   Languages,
   User,
   Lightbulb,
-  Zap
+  Zap,
+  Signal,
+  WifiOff,
 } from 'lucide-react';
-import { SubjectId, ChatMessage } from '../types';
+import { SubjectId, ChatMessage, NetworkStatus } from '../types';
+import { streamTutorResponse } from '../utils/aiTutorService';
+import { getLiveNetworkStatus } from '../utils/networkManager';
 
 interface AITutorSectionProps {
   initialSubject?: SubjectId | null;
   initialQuestion?: string;
   contextLessonTitle?: string;
   onClearInitialContext?: () => void;
+  onOpenMathSolver?: () => void;
 }
 
+
 const PRESET_PROMPTS = [
-  { label: 'Math: Pythagorean Theorem', prompt: 'How does the Pythagorean theorem work, and can you give me a simple real-world construction example?', subject: 'mathematics' as SubjectId },
+  { label: 'Solve Equation (Quadratic)', prompt: 'Solve 2x^2 + 7x + 3 = 0 showing the exact quadratic formula method, steps, and final roots.', subject: 'mathematics' as SubjectId },
+  { label: 'Pythagorean Theorem', prompt: 'Solve a right triangle with legs a = 6 and b = 8 using the Pythagorean Theorem. Show formula, method, and proof.', subject: 'mathematics' as SubjectId },
   { label: 'Science: Photosynthesis', prompt: 'Why do plant leaves look green, and what is the chemical formula for photosynthesis?', subject: 'science' as SubjectId },
   { label: 'Coding: How Loops Work', prompt: 'Explain how a for-loop works in programming with a simple pizza analogy.', subject: 'computer-studies' as SubjectId },
   { label: 'Languages: Spanish Greetings', prompt: 'What are the 5 most important polite phrases in Spanish with phonetic pronunciation?', subject: 'world-languages' as SubjectId },
@@ -39,6 +46,7 @@ export function AITutorSection({
   initialQuestion,
   contextLessonTitle,
   onClearInitialContext,
+  onOpenMathSolver,
 }: AITutorSectionProps) {
   const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(initialSubject || 'all');
   const [tone, setTone] = useState<'kids' | 'standard' | 'advanced'>('standard');
@@ -80,43 +88,54 @@ export function AITutorSection({
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const aiMsgId = `ai-${Date.now()}`;
+    const initialAiMessage: ChatMessage = {
+      id: aiMsgId,
+      sender: 'assistant',
+      text: '',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, userMessage, initialAiMessage]);
     setInput('');
     setLoading(true);
 
     try {
-      const res = await fetch('/api/gemini/tutor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: textToSend,
-          subject: selectedSubject !== 'all' ? selectedSubject : undefined,
-          tone,
-          context: contextLessonTitle,
-        }),
-      });
-
-      const data = await res.json();
-
-      const assistantMessage: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        sender: 'assistant',
-        text: data.answer || "I couldn't generate an answer right now. Please try again!",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err: any) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-err-${Date.now()}`,
-          sender: 'assistant',
-          text: '⚠️ An error occurred while contacting the AI tutor. Please check your network and try again.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      await streamTutorResponse({
+        question: textToSend,
+        subject: selectedSubject !== 'all' ? selectedSubject : undefined,
+        tone,
+        context: contextLessonTitle,
+        onChunk: (_chunk, accumulated) => {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: accumulated } : msg))
+          );
         },
-      ]);
-    } finally {
+        onComplete: (fullText) => {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: fullText } : msg))
+          );
+          setLoading(false);
+        },
+        onError: (errMsg) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMsgId
+                ? { ...msg, text: `⚠️ ${errMsg || 'An error occurred while contacting the AI tutor. Please try again.'}` }
+                : msg
+            )
+          );
+          setLoading(false);
+        },
+      });
+    } catch (err: any) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? { ...msg, text: '⚠️ An error occurred while contacting the AI tutor. Please check your network and try again.' }
+            : msg
+        )
+      );
       setLoading(false);
     }
   };
@@ -173,9 +192,15 @@ export function AITutorSection({
         
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>DanAnty AI Learning Tutor</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>DanAnty AI Learning Tutor</span>
+              </div>
+              <div className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 text-[11px] font-bold">
+                <Signal className="w-3 h-3" />
+                <span>Active On All Networks & Offline</span>
+              </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-['Outfit',sans-serif]">
               Instant Interactive AI Tutor
@@ -185,14 +210,27 @@ export function AITutorSection({
             </p>
           </div>
 
-          <button
-            id="clear-ai-chat-btn"
-            onClick={handleClearChat}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white text-indigo-600 hover:bg-indigo-50 text-xs font-bold transition-colors shadow-sm"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Chat</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {onOpenMathSolver && (
+              <button
+                id="tutor-open-math-solver-btn"
+                onClick={onOpenMathSolver}
+                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-colors shadow-sm"
+              >
+                <Calculator className="w-3.5 h-3.5 text-slate-950" />
+                <span>Fast Math Solver</span>
+              </button>
+            )}
+
+            <button
+              id="clear-ai-chat-btn"
+              onClick={handleClearChat}
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white text-indigo-600 hover:bg-indigo-50 text-xs font-bold transition-colors shadow-sm"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Chat</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter Controls: Subject & Tone Selection */}
@@ -294,7 +332,14 @@ export function AITutorSection({
                   : 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
               }`}>
                 <div className="whitespace-pre-line font-normal">
-                  {msg.text}
+                  {msg.text || (
+                    <span className="inline-flex items-center space-x-1 text-slate-400">
+                      <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
+                      <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />
+                      <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]" />
+                      <span className="text-xs ml-1.5 font-medium text-indigo-600">Generating instant response...</span>
+                    </span>
+                  )}
                 </div>
 
                 <div className={`flex items-center justify-between gap-2 pt-1 border-t text-[10px] ${
