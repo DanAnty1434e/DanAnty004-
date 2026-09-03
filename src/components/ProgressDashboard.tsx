@@ -23,6 +23,7 @@ import { CURRICULUM_DATA } from '../data/curriculum';
 import { ALL_BADGES } from '../data/badges';
 import { AIRecommendationsSection } from './AIRecommendationsSection';
 import { GamificationLeaderboard } from './GamificationLeaderboard';
+import { WeeklyXpChart } from './WeeklyXpChart';
 
 interface ProgressDashboardProps {
   progress: UserProgress;
@@ -30,6 +31,7 @@ interface ProgressDashboardProps {
   onSelectLesson: (lessonId: string) => void;
   onSelectSubject: (subjectId: SubjectId) => void;
   onUpdateInterests?: (profile: UserInterestsProfile) => void;
+  onOpenExamPrep?: () => void;
 }
 
 export function ProgressDashboard({
@@ -38,6 +40,7 @@ export function ProgressDashboard({
   onSelectLesson,
   onSelectSubject,
   onUpdateInterests,
+  onOpenExamPrep,
 }: ProgressDashboardProps) {
   const [dashboardTab, setDashboardTab] = useState<'overview' | 'recommendations' | 'leaderboard'>('overview');
 
@@ -217,6 +220,9 @@ export function ProgressDashboard({
               Explore AI Recommendations
             </button>
           </div>
+
+          {/* Weekly XP Gain & Exam Output Line Chart */}
+          <WeeklyXpChart progress={progress} onOpenExamPrep={onOpenExamPrep} />
 
           {/* Subject Mastery Progress Bars */}
           <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">

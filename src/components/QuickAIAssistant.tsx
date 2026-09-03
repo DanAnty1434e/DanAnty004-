@@ -123,33 +123,47 @@ export function QuickAIAssistant({
     setInput('');
     setIsStreaming(true);
 
-    await streamTutorResponse({
-      question: text,
-      subject: selectedSubject !== 'all' ? selectedSubject : undefined,
-      tone,
-      context: currentLessonTitle,
-      onChunk: (_chunk, accumulated) => {
-        setMessages((prev) =>
-          prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: accumulated } : msg))
-        );
-      },
-      onComplete: (fullText) => {
-        setMessages((prev) =>
-          prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: fullText } : msg))
-        );
-        setIsStreaming(false);
-      },
-      onError: (errMsg) => {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === aiMsgId
-              ? { ...msg, text: `⚠️ ${errMsg || 'Could not fetch explanation. Please try again.'}` }
-              : msg
-          )
-        );
-        setIsStreaming(false);
-      },
-    });
+    try {
+      await streamTutorResponse({
+        question: text,
+        subject: selectedSubject !== 'all' ? selectedSubject : undefined,
+        tone,
+        context: currentLessonTitle,
+        onChunk: (_chunk, accumulated) => {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: accumulated } : msg))
+          );
+        },
+        onComplete: (fullText) => {
+          const finalAns = fullText || 'Here is the direct answer to your question.';
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: finalAns } : msg))
+          );
+          setIsStreaming(false);
+        },
+        onError: (errMsg) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMsgId
+                ? { ...msg, text: `⚠️ ${errMsg || 'Could not fetch explanation. Please try again.'}` }
+                : msg
+            )
+          );
+          setIsStreaming(false);
+        },
+      });
+    } catch (err: any) {
+      console.error('Quick AI Assistant stream error:', err);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? { ...msg, text: `⚠️ ${err?.message || 'Connection error. Please try again.'}` }
+            : msg
+        )
+      );
+    } finally {
+      setIsStreaming(false);
+    }
   };
 
   const handleCopy = (text: string, id: string) => {

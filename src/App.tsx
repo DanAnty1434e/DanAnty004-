@@ -10,6 +10,8 @@ import { CURRICULUM_DATA } from './data/curriculum';
 import { ALL_BADGES } from './data/badges';
 import {
   getSavedProgress,
+  saveUserProgress,
+  appendDailyHistory,
   recordLessonCompletion,
   recordQuizAttempt,
   recordAiQuestion,
@@ -311,26 +313,38 @@ export default function App() {
   };
 
   // Handler for finishing an exam paper in the CBT Simulator
-  const handleCompleteExam = (record: ExamAttemptRecord) => {
+  const handleCompleteExam = (
+    record: ExamAttemptRecord,
+    xpEarned?: number,
+    coinsEarned?: number
+  ) => {
     // Reward XP & Coins for completing an exam
-    const earnedXp = Math.round((record.score / Math.max(record.totalQuestions, 1)) * 100) + 50;
-    const earnedCoins = 30; // High bonus coins for completing full mock/exam
+    const earnedXp =
+      xpEarned ??
+      Math.round((record.score / Math.max(record.totalQuestions, 1)) * 100) + 50;
+    const earnedCoins = coinsEarned ?? 30; // High bonus coins for completing full mock/exam
+
+    const recordWithXp: ExamAttemptRecord = {
+      ...record,
+      xpEarned: earnedXp,
+    };
 
     const updated: UserProgress = {
       ...progress,
       xp: progress.xp + earnedXp,
       todayXp: progress.todayXp + earnedXp,
       coins: (progress.coins || 0) + earnedCoins,
-      examAttempts: [...(progress.examAttempts || []), record],
+      examAttempts: [...(progress.examAttempts || []), recordWithXp],
+      dailyCompletionHistory: appendDailyHistory(
+        progress.dailyCompletionHistory,
+        earnedXp,
+        'exam'
+      ),
     };
     setProgress(updated);
-    try {
-      localStorage.setItem('dananty_user_progress_v1', JSON.stringify(updated));
-    } catch (e) {
-      console.error(e);
-    }
+    saveUserProgress(updated);
     showXpToast(earnedXp);
-    showCoinToast(earnedCoins);
+    showCoinsToast(earnedCoins);
   };
 
   // Find active subject and active lesson objects
@@ -533,6 +547,17 @@ export default function App() {
             contextLessonTitle={aiContext.contextTitle}
             onClearInitialContext={() => setAiContext({})}
             onOpenMathSolver={() => setIsMathSolverOpen(true)}
+            onRecordQuestion={() => {
+              const { updated, newBadges } = recordAiQuestion(progress);
+              setProgress(updated);
+              if (newBadges.length > 0) {
+                const badgeObj = ALL_BADGES.find((b) => b.id === newBadges[0]);
+                if (badgeObj) {
+                  setToastBadge(badgeObj.title);
+                  setTimeout(() => setToastBadge(null), 4000);
+                }
+              }
+            }}
           />
         )}
 
@@ -544,6 +569,7 @@ export default function App() {
             onSelectLesson={handleSelectLesson}
             onSelectSubject={handleSelectSubject}
             onUpdateInterests={handleUpdateInterests}
+            onOpenExamPrep={() => setIsExamModalOpen(true)}
           />
         )}
 
@@ -620,7 +646,7 @@ export default function App() {
         onClose={() => setIsExamModalOpen(false)}
         progress={progress}
         onCompleteExam={handleCompleteExam}
-        onAskAI={handleAskAIWithContext}
+        onAskAIQuestion={(q, sId) => handleAskAIWithContext(q, sId || 'Exam Prep')}
       />
 
       {/* Active Ringing Alarm Screen Modal with Web Audio Synth */}

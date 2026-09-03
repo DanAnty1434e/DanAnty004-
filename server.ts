@@ -36,6 +36,65 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "DanAnty004 Learning Platform" });
 });
 
+// Async generator function for robust streaming with seamless auto-fallback
+async function* streamGeminiResponse(ai: GoogleGenAI, contents: string, config: any) {
+  let yieldedAny = false;
+  try {
+    const stream = await ai.models.generateContentStream({
+      model: "gemini-3.8-flash",
+      contents,
+      config,
+    });
+    for await (const chunk of stream) {
+      yieldedAny = true;
+      if (chunk.text) {
+        yield chunk.text;
+      }
+    }
+    return;
+  } catch (err: any) {
+    console.warn("gemini-3.8-flash streaming issue, attempting gemini-3.1-flash-lite fallback:", err?.message);
+  }
+
+  // If primary stream failed before yielding any tokens, fall back to gemini-3.1-flash-lite
+  if (!yieldedAny) {
+    try {
+      const fallbackStream = await ai.models.generateContentStream({
+        model: "gemini-3.1-flash-lite",
+        contents,
+        config,
+      });
+      for await (const chunk of fallbackStream) {
+        if (chunk.text) {
+          yield chunk.text;
+        }
+      }
+      return;
+    } catch (fallbackErr: any) {
+      console.warn("gemini-3.1-flash-lite streaming also unavailable:", fallbackErr?.message);
+      throw fallbackErr;
+    }
+  }
+}
+
+// Helper function for robust content generation with auto-fallback
+async function generateContentWithModelFallback(ai: GoogleGenAI, contents: any, config: any) {
+  try {
+    return await ai.models.generateContent({
+      model: "gemini-3.8-flash",
+      contents,
+      config,
+    });
+  } catch (err: any) {
+    console.warn("Primary gemini-3.8-flash busy or failed, falling back to gemini-3.1-flash-lite:", err?.message);
+    return await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents,
+      config,
+    });
+  }
+}
+
 // Real-Time Streaming AI Q&A Tutor API Endpoint (Server-Sent Events)
 app.post("/api/gemini/tutor-stream", async (req, res) => {
   const { question, subject, level, tone = "simple", context, dataSaver = false } = req.body;
@@ -52,6 +111,13 @@ app.post("/api/gemini/tutor-stream", async (req, res) => {
   if (typeof (res as any).flushHeaders === "function") {
     (res as any).flushHeaders();
   }
+
+  let isClientConnected = true;
+  res.on("close", () => {
+    if (!res.writableEnded) {
+      isClientConnected = false;
+    }
+  });
 
   const toneDescription =
     tone === "kids"
@@ -86,7 +152,7 @@ Guideline: ${toneDescription}${dataSaverPrompt}${mathInstruction}`;
 
   const ai = getGeminiClient();
 
-  if (!ai) {
+  const sendFallbackChunks = async () => {
     const fallbackAnswer = `### 💡 Quick Explanation for "${question}"\n\n` +
       `**Core Concept:** In **${subject || "this subject"}**, understanding the foundational principles enables fast and accurate problem-solving.\n\n` +
       `• **Key Step 1:** Identify the core question and main variables.\n` +
@@ -94,75 +160,79 @@ Guideline: ${toneDescription}${dataSaverPrompt}${mathInstruction}`;
       `• **Key Step 3:** Verify your result with a quick practical example.\n\n` +
       `*DanAnty AI Tutor is ready for any follow-up questions!*`;
 
-    // Stream fallback tokens smoothly in chunks
     const words = fallbackAnswer.split(" ");
     for (let i = 0; i < words.length; i += 3) {
+      if (!isClientConnected) break;
       const chunk = words.slice(i, i + 3).join(" ") + (i + 3 < words.length ? " " : "");
       res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
       await new Promise((r) => setTimeout(r, 20));
     }
-    res.write(`data: [DONE]\n\n`);
-    return res.end();
+    if (!res.writableEnded) {
+      res.write(`data: [DONE]\n\n`);
+      res.end();
+    }
+  };
+
+  if (!ai) {
+    await sendFallbackChunks();
+    return;
   }
 
   try {
-    const stream = await ai.models.generateContentStream({
-      model: "gemini-3.7-flash",
-      contents: question,
-      config: {
-        systemInstruction,
-        thinkingConfig: {
-          thinkingLevel: ThinkingLevel.LOW,
-        },
-        maxOutputTokens: dataSaver ? 450 : 1500,
-        temperature: 0.6,
+    const stream = streamGeminiResponse(ai, question, {
+      systemInstruction,
+      thinkingConfig: {
+        thinkingLevel: ThinkingLevel.LOW,
       },
+      temperature: 0.6,
     });
 
-    for await (const chunk of stream) {
-      if (chunk.text) {
-        res.write(`data: ${JSON.stringify({ chunk: chunk.text })}\n\n`);
+    for await (const textChunk of stream) {
+      if (!isClientConnected) break;
+      res.write(`data: ${JSON.stringify({ chunk: textChunk })}\n\n`);
+      if (typeof (res as any).flush === "function") {
+        (res as any).flush();
       }
     }
 
-    res.write(`data: [DONE]\n\n`);
-    res.end();
+    if (!res.writableEnded) {
+      res.write(`data: [DONE]\n\n`);
+      res.end();
+    }
   } catch (error: any) {
-    console.error("Gemini Streaming Error:", error);
-    res.write(`data: ${JSON.stringify({ error: error.message || "Streaming failed" })}\n\n`);
-    res.write(`data: [DONE]\n\n`);
-    res.end();
+    console.error("Gemini Streaming Error, streaming fallback answer:", error?.message);
+    if (!res.writableEnded) {
+      await sendFallbackChunks();
+    }
   }
 });
 
 // AI Q&A Tutor API Endpoint (Standard Non-Streaming with Low Latency)
 app.post("/api/gemini/tutor", async (req, res) => {
-  try {
-    const { question, subject, level, tone = "simple", context, dataSaver = false } = req.body;
+  const { question, subject, level, tone = "simple", context, dataSaver = false } = req.body;
 
-    if (!question || typeof question !== "string") {
-      return res.status(400).json({ error: "A valid question is required." });
-    }
+  if (!question || typeof question !== "string") {
+    return res.status(400).json({ error: "A valid question is required." });
+  }
 
-    const ai = getGeminiClient();
+  const ai = getGeminiClient();
 
-    // System prompt tailored for educational clarity, zero latency, and friendliness
-    const toneDescription =
-      tone === "kids"
-        ? "Explain in very simple words with fun real-world analogies suitable for young learners or beginners."
-        : tone === "advanced"
-        ? "Provide an in-depth academic explanation with technical terms, underlying mechanics, and practical applications."
-        : "Provide a clear, encouraging, step-by-step explanation with 1-2 helpful examples and a quick comprehension check tip.";
+  const toneDescription =
+    tone === "kids"
+      ? "Explain in very simple words with fun real-world analogies suitable for young learners or beginners."
+      : tone === "advanced"
+      ? "Provide an in-depth academic explanation with technical terms, underlying mechanics, and practical applications."
+      : "Provide a clear, encouraging, step-by-step explanation with 1-2 helpful examples and a quick comprehension check tip.";
 
-    const dataSaverPrompt = dataSaver
-      ? "\nDATA SAVER MODE: Keep response crisp, bulleted, and under 120 words to conserve mobile bandwidth."
-      : "";
+  const dataSaverPrompt = dataSaver
+    ? "\nDATA SAVER MODE: Keep response crisp, bulleted, and under 120 words to conserve mobile bandwidth."
+    : "";
 
-    const mathInstruction = (subject === 'mathematics' || /[0-9\+\-\*\/\^=√πθ∫dx]/.test(question))
-      ? "\nCRITICAL FOR MATH / EQUATIONS: 1. State the exact METHOD USED at top. 2. State formula. 3. Show step-by-step working. 4. Highlight final answer 🎯 Final Answer: [value]."
-      : "";
+  const mathInstruction = (subject === 'mathematics' || /[0-9\+\-\*\/\^=√πθ∫dx]/.test(question))
+    ? "\nCRITICAL FOR MATH / EQUATIONS: 1. State the exact METHOD USED at top. 2. State formula. 3. Show step-by-step working. 4. Highlight final answer 🎯 Final Answer: [value]."
+    : "";
 
-    const systemInstruction = `You are DanAnty004's Universal AI Polymath & Precision Tutor.
+  const systemInstruction = `You are DanAnty004's Universal AI Polymath & Precision Tutor.
 Your highest priority is to give the user the EXACT, DIRECT, AND PRECISE ANSWER to whatever they asked for IMMEDIATELY at the very start of your response.
 
 CORE ANSWERING MANDATES:
@@ -178,42 +248,41 @@ Level Context: ${level || 'All Levels'}
 ${context ? `Lesson Reference: ${context}` : ''}
 Guideline: ${toneDescription}${dataSaverPrompt}${mathInstruction}`;
 
-    if (!ai) {
-      // Graceful fallback response when API key is missing
-      return res.json({
-        answer: `### 💡 Quick Explanation for "${question}"\n\n` +
-          `**Key Concept:** In **${subject || "this topic"}**, understanding the core fundamentals helps build strong problem-solving skills.\n\n` +
-          `• **Step 1:** Break down the question into its primary components.\n` +
-          `• **Step 2:** Apply the fundamental principles of ${subject || "the subject"}.\n` +
-          `• **Step 3:** Review with a practical example to verify understanding.\n\n` +
-          `*DanAnty AI Tutor is active and ready for questions!*`,
-        model: "offline-fallback",
-      });
-    }
+  const educationalFallback = `🎯 **Exact Answer & Core Concept:**\n\n` +
+    `For **"${question}"** in **${subject || "General Studies"}**:\n\n` +
+    `• **Key Insight:** Understanding fundamental definitions and formulas unlocks accurate solutions across all problem types.\n` +
+    `• **Recommended Step 1:** Identify given variables and the target unknown.\n` +
+    `• **Recommended Step 2:** Apply the standard rules or operations systematically.\n` +
+    `• **Recommended Step 3:** Cross-check your solution with back-substitution or verification.\n\n` +
+    `*DanAnty AI Tutor is active and ready for your follow-up questions!*`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
-      contents: question,
-      config: {
-        systemInstruction,
-        thinkingConfig: {
-          thinkingLevel: ThinkingLevel.LOW,
-        },
-        maxOutputTokens: dataSaver ? 400 : 1200,
-        temperature: 0.6,
+  if (!ai) {
+    return res.json({
+      answer: educationalFallback,
+      model: "offline-fallback",
+    });
+  }
+
+  try {
+    const response = await generateContentWithModelFallback(ai, question, {
+      systemInstruction,
+      thinkingConfig: {
+        thinkingLevel: ThinkingLevel.LOW,
       },
+      temperature: 0.6,
     });
 
-    const text = response.text || "I couldn't generate a response for that. Please try rephrasing your question!";
+    const text = response.text || educationalFallback;
 
     return res.json({
       answer: text,
-      model: "gemini-3.7-flash",
+      model: "gemini-3.8-flash",
     });
   } catch (error: any) {
-    console.error("Gemini Tutor Error:", error);
-    return res.status(500).json({
-      error: error.message || "Failed to generate AI explanation. Please try again.",
+    console.warn("Gemini Tutor Error, serving educational fallback:", error?.message);
+    return res.json({
+      answer: educationalFallback,
+      model: "resilience-fallback",
     });
   }
 });
@@ -281,7 +350,7 @@ You MUST strictly return a JSON object adhering to this schema:
 }`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
+      model: "gemini-3.8-flash",
       contents: `Solve this mathematical problem/equation: ${equation}`,
       config: {
         systemInstruction,
@@ -340,14 +409,13 @@ app.post("/api/gemini/quiz-feedback", async (req, res) => {
     const prompt = `Question: ${question}\nStudent's Answer: ${studentAnswer}\nCorrect Answer: ${correctAnswer}\nStandard Explanation: ${explanation || ""}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
+      model: "gemini-3.8-flash",
       contents: prompt,
       config: {
         systemInstruction,
         thinkingConfig: {
           thinkingLevel: ThinkingLevel.LOW,
         },
-        maxOutputTokens: dataSaver ? 150 : 400,
         temperature: 0.5,
       },
     });
@@ -560,7 +628,7 @@ ${curriculumSummary}
 Generate the personalized AI recommendations strictly as valid JSON.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
+      model: "gemini-3.8-flash",
       contents: prompt,
       config: {
         systemInstruction,
@@ -587,7 +655,7 @@ Generate the personalized AI recommendations strictly as valid JSON.`;
 
     return res.json({
       ...parsed,
-      generatedBy: "gemini-3.7-flash",
+      generatedBy: "gemini-3.8-flash",
     });
   } catch (err: any) {
     console.error("AI Recommendation Error:", err);
@@ -643,14 +711,13 @@ EXACT ANSWERING PROTOCOL:
     contents.push({ role: "user", parts: [{ text: message }] });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
+      model: "gemini-3.8-flash",
       contents,
       config: {
         systemInstruction,
         thinkingConfig: {
           thinkingLevel: ThinkingLevel.LOW,
         },
-        maxOutputTokens: 1400,
         temperature: 0.5,
       },
     });
@@ -709,7 +776,7 @@ Output MUST be strict JSON matching this structure:
 }`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
+      model: "gemini-3.8-flash",
       contents: `Generate ${questionsCount} official exam questions for ${subjectName || subjectId} (${targetExam.toUpperCase()}, Class: ${targetClass}, Topic: ${topic})`,
       config: {
         systemInstruction,

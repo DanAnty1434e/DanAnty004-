@@ -22,6 +22,7 @@ import {
 import { SubjectId, ChatMessage, NetworkStatus } from '../types';
 import { streamTutorResponse } from '../utils/aiTutorService';
 import { getLiveNetworkStatus } from '../utils/networkManager';
+import { isSpeechSynthesisSupported, speakText, stopSpeaking } from '../utils/voiceAssistant';
 
 interface AITutorSectionProps {
   initialSubject?: SubjectId | null;
@@ -29,6 +30,7 @@ interface AITutorSectionProps {
   contextLessonTitle?: string;
   onClearInitialContext?: () => void;
   onOpenMathSolver?: () => void;
+  onRecordQuestion?: () => void;
 }
 
 
@@ -49,6 +51,7 @@ export function AITutorSection({
   contextLessonTitle,
   onClearInitialContext,
   onOpenMathSolver,
+  onRecordQuestion,
 }: AITutorSectionProps) {
   const [selectedSubject, setSelectedSubject] = useState<string>(initialSubject || 'all');
   const [tone, setTone] = useState<'kids' | 'standard' | 'advanced'>('standard');
@@ -67,9 +70,11 @@ export function AITutorSection({
   ]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initialHandledRef = useRef(false);
 
   useEffect(() => {
-    if (initialQuestion) {
+    if (initialQuestion && !initialHandledRef.current) {
+      initialHandledRef.current = true;
       handleSendPrompt(initialQuestion);
       if (onClearInitialContext) onClearInitialContext();
     }
@@ -81,6 +86,10 @@ export function AITutorSection({
 
   const handleSendPrompt = async (textToSend: string) => {
     if (!textToSend.trim() || loading) return;
+
+    if (onRecordQuestion) {
+      onRecordQuestion();
+    }
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -114,8 +123,9 @@ export function AITutorSection({
           );
         },
         onComplete: (fullText) => {
+          const finalAns = fullText || 'Here is the direct answer to your question.';
           setMessages((prev) =>
-            prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: fullText } : msg))
+            prev.map((msg) => (msg.id === aiMsgId ? { ...msg, text: finalAns } : msg))
           );
           setLoading(false);
         },
@@ -138,6 +148,7 @@ export function AITutorSection({
             : msg
         )
       );
+    } finally {
       setLoading(false);
     }
   };
@@ -149,31 +160,23 @@ export function AITutorSection({
   };
 
   const handleSpeak = (text: string, id: string) => {
-    if (!('speechSynthesis' in window)) {
-      alert('Speech synthesis is not supported in this browser.');
-      return;
-    }
+    if (!isSpeechSynthesisSupported()) return;
 
     if (speakingId === id) {
-      window.speechSynthesis.cancel();
+      stopSpeaking();
       setSpeakingId(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    // Clean markdown stars before reading
-    const cleanText = text.replace(/[*#`_]/g, '');
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 0.95;
-    utterance.onend = () => setSpeakingId(null);
-    utterance.onerror = () => setSpeakingId(null);
-
     setSpeakingId(id);
-    window.speechSynthesis.speak(utterance);
+    speakText(text, {
+      onEnd: () => setSpeakingId(null),
+      onError: () => setSpeakingId(null),
+    });
   };
 
   const handleClearChat = () => {
-    window.speechSynthesis?.cancel();
+    stopSpeaking();
     setSpeakingId(null);
     setMessages([
       {
@@ -342,13 +345,17 @@ export function AITutorSection({
                   : 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
               }`}>
                 <div className="whitespace-pre-line font-normal">
-                  {msg.text || (
+                  {msg.text ? (
+                    msg.text
+                  ) : loading ? (
                     <span className="inline-flex items-center space-x-1 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
                       <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />
                       <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]" />
                       <span className="text-xs ml-1.5 font-medium text-indigo-600">Generating instant response...</span>
                     </span>
+                  ) : (
+                    <span className="text-slate-400 italic">No response received. Please try asking again.</span>
                   )}
                 </div>
 
@@ -398,19 +405,6 @@ export function AITutorSection({
           );
         })}
 
-        {loading && (
-          <div className="flex items-center space-x-3 text-slate-500 text-xs py-2">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">
-              <Bot className="w-4 h-4" />
-            </div>
-            <div className="flex space-x-1.5">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
-              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />
-              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]" />
-            </div>
-            <span>Formulating step-by-step guidance...</span>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 

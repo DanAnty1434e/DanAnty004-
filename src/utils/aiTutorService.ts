@@ -83,7 +83,7 @@ export async function streamTutorResponse(options: StreamTutorOptions): Promise<
 
   try {
     const controller = new AbortController();
-    const timeoutMs = isDataSaver ? 6000 : 12000;
+    const timeoutMs = isDataSaver ? 25000 : 35000;
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const response = await fetch('/api/gemini/tutor-stream', {
@@ -105,6 +105,7 @@ export async function streamTutorResponse(options: StreamTutorOptions): Promise<
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
     let totalBytesReceived = 0;
+    let streamHadError = false;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -115,18 +116,21 @@ export async function streamTutorResponse(options: StreamTutorOptions): Promise<
       }
 
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
+      const lines = buffer.split(/\r?\n/);
       buffer = lines.pop() || '';
 
       for (const line of lines) {
         const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
 
-        const jsonStr = trimmed.slice(6);
+        const jsonStr = trimmed.replace(/^data:\s*/, '');
         if (jsonStr === '[DONE]') {
-          recordDataTransfer(totalBytesReceived, bytesSent, isDataSaver ? 650 : 200, false);
-          onComplete(accumulated);
-          return;
+          if (accumulated.trim().length > 0) {
+            recordDataTransfer(totalBytesReceived, bytesSent, isDataSaver ? 650 : 200, false);
+            onComplete(accumulated);
+            return;
+          }
+          break;
         }
 
         try {
@@ -135,7 +139,8 @@ export async function streamTutorResponse(options: StreamTutorOptions): Promise<
             accumulated += parsed.chunk;
             onChunk(parsed.chunk, accumulated);
           } else if (parsed.error) {
-            throw new Error(parsed.error);
+            streamHadError = true;
+            console.warn('Stream received error payload:', parsed.error);
           }
         } catch {
           // non-json lines ignored
@@ -143,13 +148,13 @@ export async function streamTutorResponse(options: StreamTutorOptions): Promise<
       }
     }
 
-    if (accumulated.trim().length > 0) {
+    if (!streamHadError && accumulated.trim().length > 0) {
       recordDataTransfer(totalBytesReceived, bytesSent, isDataSaver ? 650 : 200, false);
       onComplete(accumulated);
       return;
     }
 
-    throw new Error('Empty response received from stream');
+    throw new Error(streamHadError ? 'Streaming reported server error' : 'Empty stream output');
   } catch (err: any) {
     console.warn('Stream connection slow or offline, using robust data fallback:', err);
 
@@ -161,20 +166,24 @@ export async function streamTutorResponse(options: StreamTutorOptions): Promise<
         body: requestPayload,
       });
 
-      if (!fallbackRes.ok) throw new Error('Standard endpoint failed');
+      if (!fallbackRes.ok) throw new Error(`Standard endpoint failed with ${fallbackRes.status}`);
       const data = await fallbackRes.json();
-      const answer = data.answer || 'Here is a clear explanation for your question.';
+      if (data.error) throw new Error(data.error);
+
+      const answer = data.answer || getOfflineAnswer(question, subject);
       const bytesIn = new Blob([JSON.stringify(data)]).size;
       recordDataTransfer(bytesIn, bytesSent, isDataSaver ? 400 : 100, false);
 
       onChunk(answer, answer);
       onComplete(answer);
-    } catch {
-      // Local Instant Knowledge Base Fallback
+      return;
+    } catch (fallbackErr) {
+      console.warn('Fallback to local offline knowledge engine:', fallbackErr);
       const offlineAns = getOfflineAnswer(question, subject);
       recordDataTransfer(0, bytesSent, new Blob([offlineAns]).size, true);
       onChunk(offlineAns, offlineAns);
       onComplete(offlineAns);
+      return;
     }
   }
 }

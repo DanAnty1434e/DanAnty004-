@@ -1,4 +1,11 @@
-import { UserProgress, QuizAttempt, LeagueTier, UserInterestsProfile } from '../types';
+import {
+  UserProgress,
+  QuizAttempt,
+  LeagueTier,
+  UserInterestsProfile,
+  DailyCompletionRecord,
+  ExamAttemptRecord,
+} from '../types';
 import { ALL_BADGES } from '../data/badges';
 
 const STORAGE_KEY = 'dananty004_user_progress';
@@ -47,6 +54,53 @@ const DEFAULT_PROGRESS: UserProgress = {
   interestsProfile: DEFAULT_INTERESTS,
   aiQuestionsAsked: 1,
   widgetsInteracted: 2,
+  examAttempts: [
+    {
+      id: 'mock-waec-math-1',
+      paperId: 'waec-math-2024-obj',
+      paperTitle: 'WASSCE / WAEC Mathematics Mock CBT',
+      subjectId: 'mathematics',
+      targetExam: 'waec',
+      targetClass: 'ss3',
+      score: 85,
+      rawScore: 17,
+      totalQuestions: 20,
+      gradeFormatted: 'A1 (Distinction)',
+      timeSpentSeconds: 650,
+      completedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      userAnswers: {},
+      xpEarned: 135,
+    },
+  ],
+  dailyCompletionHistory: [
+    {
+      date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+      dayLabel: 'Tue',
+      lessonXp: 50,
+      examXp: 135,
+      totalXp: 185,
+      lessonsCompleted: 1,
+      examsCompleted: 1,
+    },
+    {
+      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+      dayLabel: 'Wed',
+      lessonXp: 90,
+      examXp: 0,
+      totalXp: 90,
+      lessonsCompleted: 1,
+      quizzesCompleted: 1,
+    },
+    {
+      date: new Date().toISOString().split('T')[0],
+      dayLabel: 'Thu',
+      lessonXp: 75,
+      examXp: 0,
+      totalXp: 75,
+      lessonsCompleted: 1,
+      quizzesCompleted: 1,
+    },
+  ],
 };
 
 export function getLeagueForXp(xp: number): LeagueTier {
@@ -108,12 +162,50 @@ export function getSavedProgress(): UserProgress {
       todayXp: lastActive === today ? (parsed.todayXp || 0) : 0,
       lastActiveDate: today,
       interestsProfile: parsed.interestsProfile || DEFAULT_INTERESTS,
+      examAttempts: parsed.examAttempts || DEFAULT_PROGRESS.examAttempts || [],
+      dailyCompletionHistory: parsed.dailyCompletionHistory || DEFAULT_PROGRESS.dailyCompletionHistory || [],
     };
     return loaded;
   } catch (e) {
     console.error('Failed to load user progress:', e);
     return DEFAULT_PROGRESS;
   }
+}
+
+export function appendDailyHistory(
+  existingHistory: DailyCompletionRecord[] = [],
+  xp: number,
+  type: 'lesson' | 'exam'
+): DailyCompletionRecord[] {
+  const today = new Date().toISOString().split('T')[0];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayLabel = dayNames[new Date().getDay()];
+  const copy = [...(existingHistory || [])];
+  const idx = copy.findIndex((h) => h.date === today);
+
+  if (idx >= 0) {
+    const current = copy[idx];
+    copy[idx] = {
+      ...current,
+      lessonXp: current.lessonXp + (type === 'lesson' ? xp : 0),
+      examXp: current.examXp + (type === 'exam' ? xp : 0),
+      totalXp: current.totalXp + xp,
+      lessonsCompleted: (current.lessonsCompleted || 0) + (type === 'lesson' ? 1 : 0),
+      examsCompleted: (current.examsCompleted || 0) + (type === 'exam' ? 1 : 0),
+    };
+  } else {
+    copy.push({
+      date: today,
+      dayLabel,
+      lessonXp: type === 'lesson' ? xp : 0,
+      examXp: type === 'exam' ? xp : 0,
+      totalXp: xp,
+      lessonsCompleted: type === 'lesson' ? 1 : 0,
+      examsCompleted: type === 'exam' ? 1 : 0,
+    });
+  }
+
+  return copy.slice(-30);
 }
 
 export function saveUserProgress(progress: UserProgress): void {
@@ -276,6 +368,11 @@ export function recordLessonCompletion(progress: UserProgress, lessonId: string,
     level: newLevel,
     todayXp: newTodayXp,
     badges: [...progress.badges, ...newBadges],
+    dailyCompletionHistory: appendDailyHistory(
+      progress.dailyCompletionHistory,
+      gainedXp + totalBonusXp,
+      'lesson'
+    ),
   };
 
   saveUserProgress(updated);
@@ -318,6 +415,11 @@ export function recordQuizAttempt(progress: UserProgress, attempt: QuizAttempt):
     level: newLevel,
     todayXp: newTodayXp,
     badges: [...progress.badges, ...newBadges],
+    dailyCompletionHistory: appendDailyHistory(
+      progress.dailyCompletionHistory,
+      earnedXp + totalBonusXp,
+      'lesson'
+    ),
   };
 
   saveUserProgress(updated);

@@ -1,4 +1,13 @@
-export type SubjectCategory = 'all' | 'sciences' | 'arts' | 'commercial' | 'languages' | 'primary' | 'global';
+export type SubjectCategory =
+  | 'all'
+  | 'sciences'
+  | 'science'
+  | 'arts'
+  | 'art'
+  | 'commercial'
+  | 'languages'
+  | 'primary'
+  | 'global';
 
 export type SubjectId =
   // Pure & Applied Sciences, Tech & Math
@@ -255,6 +264,17 @@ export interface UserInterestsProfile {
   favoriteSubjects: SubjectId[];
 }
 
+export interface DailyCompletionRecord {
+  date: string; // 'YYYY-MM-DD'
+  dayLabel?: string;
+  lessonXp: number;
+  examXp: number;
+  totalXp: number;
+  lessonsCompleted?: number;
+  quizzesCompleted?: number;
+  examsCompleted?: number;
+}
+
 export interface UserProgress {
   xp: number;
   level: number;
@@ -273,6 +293,8 @@ export interface UserProgress {
   aiQuestionsAsked?: number;
   widgetsInteracted?: number;
   gamesPlayed?: number;
+  examAttempts?: ExamAttemptRecord[];
+  dailyCompletionHistory?: DailyCompletionRecord[];
 }
 
 export interface MathStep {
@@ -338,6 +360,7 @@ export interface ExamAttemptRecord {
   completedAt: string;
   userAnswers: Record<number, number>; // question index -> chosen option index
   aiEvaluationSummary?: string;
+  xpEarned?: number;
 }
 
 export interface MiniGame {

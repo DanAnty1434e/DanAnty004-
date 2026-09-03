@@ -48,8 +48,8 @@ export function SubjectTopicExplorer({
   // Filter subjects by category
   const filteredSubjectsByCategory = CURRICULUM_DATA.filter((subject) => {
     if (activeCategory === 'all') return true;
-    if (activeCategory === 'science') return subject.category === 'science';
-    if (activeCategory === 'art') return subject.category === 'art';
+    if (activeCategory === 'science') return subject.category === 'science' || subject.category === 'sciences';
+    if (activeCategory === 'art') return subject.category === 'art' || subject.category === 'arts';
     if (activeCategory === 'commercial') return subject.category === 'commercial';
     if (activeCategory === 'primary') return subject.category === 'primary';
     if (activeCategory === 'languages') return subject.category === 'languages' || subject.id === 'world-languages';
@@ -144,8 +144,8 @@ export function SubjectTopicExplorer({
         <div className="bg-white p-2 sm:p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-2 overflow-x-auto">
           {[
             { id: 'all', label: 'All Subjects', count: CURRICULUM_DATA.length },
-            { id: 'science', label: '🔬 Sciences & STEM', count: CURRICULUM_DATA.filter((s) => s.category === 'science').length },
-            { id: 'art', label: '🎨 Arts & Humanities', count: CURRICULUM_DATA.filter((s) => s.category === 'art').length },
+            { id: 'science', label: '🔬 Sciences & STEM', count: CURRICULUM_DATA.filter((s) => s.category === 'science' || s.category === 'sciences').length },
+            { id: 'art', label: '🎨 Arts & Humanities', count: CURRICULUM_DATA.filter((s) => s.category === 'art' || s.category === 'arts').length },
             { id: 'commercial', label: '📈 Commercial & Business', count: CURRICULUM_DATA.filter((s) => s.category === 'commercial').length },
             { id: 'primary', label: '🌱 Primary Foundation (Basic 1-6)', count: CURRICULUM_DATA.filter((s) => s.category === 'primary').length },
             { id: 'languages', label: '🌍 World Languages', count: CURRICULUM_DATA.filter((s) => s.category === 'languages' || s.id === 'world-languages').length },
