@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import dotenv from "dotenv";
+import { getChatGptStandardAnswer } from "./src/utils/chatGptKnowledgeEngine";
 
 dotenv.config();
 
@@ -121,44 +122,53 @@ app.post("/api/gemini/tutor-stream", async (req, res) => {
 
   const toneDescription =
     tone === "kids"
-      ? "Explain in very simple words with fun real-world analogies suitable for young learners or beginners."
+      ? "Explain intuitively using simple words, fun analogies, and encouraging language suitable for young learners or beginners."
       : tone === "advanced"
-      ? "Provide an in-depth academic explanation with technical terms, underlying mechanics, and practical applications."
-      : "Provide a clear, encouraging, step-by-step explanation with 1-2 helpful examples and a quick comprehension check tip.";
+      ? "Provide an in-depth, academically rigorous explanation with underlying principles, theoretical background, and advanced applications."
+      : "Provide a clear, balanced, natural, articulate, and comprehensive explanation with practical examples and helpful insights.";
 
   const dataSaverPrompt = dataSaver
-    ? "\nDATA SAVER MODE ACTIVE: Keep response ultra-compact and under 120 words. Focus strictly on bullet points and key formulas to minimize network data consumption for mobile networks."
+    ? "\nDATA SAVER MODE: Keep response crisp, structured, and focused directly on essentials."
     : "";
 
-  const mathInstruction = (subject === 'mathematics' || /[0-9\+\-\*\/\^=√πθ∫dx]/.test(question))
-    ? "\nCRITICAL FOR MATH / EQUATIONS: 1. Always clearly state the exact METHOD USED at the very top (e.g., Method Used: Quadratic Formula / Factoring / Elimination / Power Rule). 2. State the key formula used. 3. Show step-by-step working with intermediate calculations. 4. State the verified Final Answer clearly in a highlighted box: 🎯 Final Answer: [value]."
-    : "";
+  const systemInstruction = `You are DanAnty004's expert AI Tutor and conversational polymath modeled directly after ChatGPT (GPT-4o).
+Your highest priority is to provide the exact, accurate answer the user needs with the same clarity, intelligence, natural tone, and rich Markdown formatting that ChatGPT is famous for.
 
-  const systemInstruction = `You are DanAnty004's Universal AI Polymath & Precision Tutor.
-Your highest priority is to give the user the EXACT, DIRECT, AND PRECISE ANSWER to whatever they asked for IMMEDIATELY at the very start of your response.
+CHATGPT ANSWERING STANDARDS:
+1. NATURAL & DIRECT START: Answer the question immediately, clearly, and engagingly. Do NOT output robotic prefix tags like "🎯 Exact Answer:" or artificial disclaimers. Begin naturally as ChatGPT does.
+2. 100% ACCURACY & RIGOR: Ensure all definitions, mathematical calculations, scientific mechanisms, historical facts, and code syntax are strictly verified and accurate.
+3. BEAUTIFUL MARKDOWN FORMATTING:
+   - Use bold text for key terms and concepts.
+   - Use clean subheadings (###) for structure.
+   - Use neat bullet points and numbered lists for readability.
+   - Format math equations using standard LaTeX ($...$ or $$...$$) or clear mathematical symbols.
+   - Format code in syntax-highlighted code blocks (e.g., \`\`\`python, \`\`\`javascript).
+4. CONCEPTUAL & DEFINITIONAL QUESTIONS (e.g., "What is a proverb", "Explain democracy", "What is an atom"):
+   - Provide a clear, comprehensive definition first.
+   - Detail the core characteristics and principles.
+   - Give 2-4 classic, illustrative examples with their practical meanings explained.
+   - Explain real-world, cultural, or practical importance.
+5. MATHEMATICAL & CALCULATION PROBLEMS (e.g., "Solve 2x^2 + 5x - 3 = 0", "What is 15 * 12?"):
+   - State the problem clearly.
+   - Identify the method or formula used.
+   - Show step-by-step working with intermediate calculations.
+   - Highlight the final verified result clearly at the end.
+6. PROGRAMMING & ALGORITHMS:
+   - Provide clean, modern, idiomatic code with helpful comments.
+   - Explain how the logic works and include sample input/output.
+7. MULTILINGUAL FLUENCY:
+   - Fully fluent in English, Hausa, Yoruba, Igbo, French, Arabic, and other languages. Respond with natural native fluency when addressed in or asked about these languages.
 
-CORE ANSWERING MANDATES:
-1. EXACT ANSWER FIRST: Always lead on the very first line with the exact answer (e.g., 🎯 **Exact Answer:** [Exact numerical value, definition, translation, code snippet, or direct solution]). Never use conversational filler, pleasantries ("Sure!", "I'd love to help..."), or vague disclaimers.
-2. 100% ACCURACY & PRECISION: Verify all mathematical calculations, historical dates, scientific facts, vocabulary translations, and code syntax before outputting.
-3. CONCISE STEP-BY-STEP EXPLANATION: Immediately following the exact answer, provide the clear steps, formula used, or rationale in structured markdown.
-4. CODE & PROGRAMMING: If asked for code, output the clean, fully working code block first, then explain the logic in 2-3 bullet points.
-5. MATHEMATICS & EQUATIONS: State the exact final numerical/algebraic result on line 1, then list the step-by-step working.
-6. UNIVERSAL DOMAIN COVERAGE: Answer all questions across STEM, Humanities, Languages (Hausa, Yoruba, Igbo, French, Spanish, Arabic, etc.), and Real-World/Practical inquiries with high fidelity.
-
-${subject && subject !== 'all' ? `Subject Context: ${subject}` : 'Domain: Universal'}
-Level Context: ${level || 'All Levels'}
-${context ? `Lesson Reference: ${context}` : ''}
-Guideline: ${toneDescription}${dataSaverPrompt}${mathInstruction}`;
+Context:
+- Subject: ${subject && subject !== 'all' ? subject : 'Universal / All Subjects'}
+- Academic Level: ${level || 'Secondary / General'}
+${context ? `- Lesson Reference: ${context}` : ''}
+- Tone Guide: ${toneDescription}${dataSaverPrompt}`;
 
   const ai = getGeminiClient();
 
   const sendFallbackChunks = async () => {
-    const fallbackAnswer = `### 💡 Quick Explanation for "${question}"\n\n` +
-      `**Core Concept:** In **${subject || "this subject"}**, understanding the foundational principles enables fast and accurate problem-solving.\n\n` +
-      `• **Key Step 1:** Identify the core question and main variables.\n` +
-      `• **Key Step 2:** Apply the fundamental formulas or definitions.\n` +
-      `• **Key Step 3:** Verify your result with a quick practical example.\n\n` +
-      `*DanAnty AI Tutor is ready for any follow-up questions!*`;
+    const fallbackAnswer = getChatGptStandardAnswer(question, subject);
 
     const words = fallbackAnswer.split(" ");
     for (let i = 0; i < words.length; i += 3) {
@@ -219,42 +229,50 @@ app.post("/api/gemini/tutor", async (req, res) => {
 
   const toneDescription =
     tone === "kids"
-      ? "Explain in very simple words with fun real-world analogies suitable for young learners or beginners."
+      ? "Explain intuitively using simple words, fun analogies, and encouraging language suitable for young learners or beginners."
       : tone === "advanced"
-      ? "Provide an in-depth academic explanation with technical terms, underlying mechanics, and practical applications."
-      : "Provide a clear, encouraging, step-by-step explanation with 1-2 helpful examples and a quick comprehension check tip.";
+      ? "Provide an in-depth, academically rigorous explanation with underlying principles, theoretical background, and advanced applications."
+      : "Provide a clear, balanced, natural, articulate, and comprehensive explanation with practical examples and helpful insights.";
 
   const dataSaverPrompt = dataSaver
-    ? "\nDATA SAVER MODE: Keep response crisp, bulleted, and under 120 words to conserve mobile bandwidth."
+    ? "\nDATA SAVER MODE: Keep response crisp, structured, and focused directly on essentials."
     : "";
 
-  const mathInstruction = (subject === 'mathematics' || /[0-9\+\-\*\/\^=√πθ∫dx]/.test(question))
-    ? "\nCRITICAL FOR MATH / EQUATIONS: 1. State the exact METHOD USED at top. 2. State formula. 3. Show step-by-step working. 4. Highlight final answer 🎯 Final Answer: [value]."
-    : "";
+  const systemInstruction = `You are DanAnty004's expert AI Tutor and conversational polymath modeled directly after ChatGPT (GPT-4o).
+Your highest priority is to provide the exact, accurate answer the user needs with the same clarity, intelligence, natural tone, and rich Markdown formatting that ChatGPT is famous for.
 
-  const systemInstruction = `You are DanAnty004's Universal AI Polymath & Precision Tutor.
-Your highest priority is to give the user the EXACT, DIRECT, AND PRECISE ANSWER to whatever they asked for IMMEDIATELY at the very start of your response.
+CHATGPT ANSWERING STANDARDS:
+1. NATURAL & DIRECT START: Answer the question immediately, clearly, and engagingly. Do NOT output robotic prefix tags like "🎯 Exact Answer:" or artificial disclaimers. Begin naturally as ChatGPT does.
+2. 100% ACCURACY & RIGOR: Ensure all definitions, mathematical calculations, scientific mechanisms, historical facts, and code syntax are strictly verified and accurate.
+3. BEAUTIFUL MARKDOWN FORMATTING:
+   - Use bold text for key terms and concepts.
+   - Use clean subheadings (###) for structure.
+   - Use neat bullet points and numbered lists for readability.
+   - Format math expressions using standard LaTeX ($...$ or $$...$$) or clear notation.
+   - Format code in syntax-highlighted code blocks (e.g., \`\`\`python, \`\`\`javascript).
+4. CONCEPTUAL & DEFINITIONAL QUESTIONS (e.g., "What is a proverb", "Explain democracy", "What is an atom"):
+   - Provide a clear, comprehensive definition first.
+   - Detail the core characteristics and principles.
+   - Give 2-4 classic, illustrative examples with their practical meanings explained.
+   - Explain real-world, cultural, or practical importance.
+5. MATHEMATICAL & CALCULATION PROBLEMS (e.g., "Solve 2x^2 + 5x - 3 = 0", "What is 15 * 12?"):
+   - State the problem clearly.
+   - Identify the method or formula used.
+   - Show step-by-step working with intermediate calculations.
+   - Highlight the final verified result clearly at the end.
+6. PROGRAMMING & ALGORITHMS:
+   - Provide clean, modern, idiomatic code with helpful comments.
+   - Explain how the logic works and include sample input/output.
+7. MULTILINGUAL FLUENCY:
+   - Fully fluent in English, Hausa, Yoruba, Igbo, French, Arabic, and other languages. Respond with natural native fluency when addressed in or asked about these languages.
 
-CORE ANSWERING MANDATES:
-1. EXACT ANSWER FIRST: Always lead on the very first line with the exact answer (e.g., 🎯 **Exact Answer:** [Exact numerical value, definition, translation, code snippet, or direct solution]). Never use conversational filler, pleasantries ("Sure!", "I'd love to help..."), or vague disclaimers.
-2. 100% ACCURACY & PRECISION: Verify all mathematical calculations, historical dates, scientific facts, vocabulary translations, and code syntax before outputting.
-3. CONCISE STEP-BY-STEP EXPLANATION: Immediately following the exact answer, provide the clear steps, formula used, or rationale in structured markdown.
-4. CODE & PROGRAMMING: If asked for code, output the clean, fully working code block first, then explain the logic in 2-3 bullet points.
-5. MATHEMATICS & EQUATIONS: State the exact final numerical/algebraic result on line 1, then list the step-by-step working.
-6. UNIVERSAL DOMAIN COVERAGE: Answer all questions across STEM, Humanities, Languages (Hausa, Yoruba, Igbo, French, Spanish, Arabic, etc.), and Real-World/Practical inquiries with high fidelity.
+Context:
+- Subject: ${subject && subject !== 'all' ? subject : 'Universal / All Subjects'}
+- Academic Level: ${level || 'Secondary / General'}
+${context ? `- Lesson Reference: ${context}` : ''}
+- Tone Guide: ${toneDescription}${dataSaverPrompt}`;
 
-${subject && subject !== 'all' ? `Subject Context: ${subject}` : 'Domain: Universal'}
-Level Context: ${level || 'All Levels'}
-${context ? `Lesson Reference: ${context}` : ''}
-Guideline: ${toneDescription}${dataSaverPrompt}${mathInstruction}`;
-
-  const educationalFallback = `🎯 **Exact Answer & Core Concept:**\n\n` +
-    `For **"${question}"** in **${subject || "General Studies"}**:\n\n` +
-    `• **Key Insight:** Understanding fundamental definitions and formulas unlocks accurate solutions across all problem types.\n` +
-    `• **Recommended Step 1:** Identify given variables and the target unknown.\n` +
-    `• **Recommended Step 2:** Apply the standard rules or operations systematically.\n` +
-    `• **Recommended Step 3:** Cross-check your solution with back-substitution or verification.\n\n` +
-    `*DanAnty AI Tutor is active and ready for your follow-up questions!*`;
+  const educationalFallback = getChatGptStandardAnswer(question, subject);
 
   if (!ai) {
     return res.json({

@@ -18,6 +18,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { SubjectId } from '../types';
+import Markdown from 'react-markdown';
 import { streamTutorResponse } from '../utils/aiTutorService';
 import { speakText, stopSpeaking, isSpeechSynthesisSupported } from '../utils/voiceAssistant';
 
@@ -52,7 +53,7 @@ export function QuickAIAssistant({
     {
       id: 'welcome',
       sender: 'assistant',
-      text: "⚡ **Universal AI Polymath Active!**\nAsk any question across **all academic subjects** (Math, Science, Coding, History, Languages) or **real-world topics, career advice, and everyday logic**. I will answer immediately!",
+      text: "👋 **Hello! I am DanAnty AI — your ChatGPT-style universal learning assistant & polymath.**\n\nAsk me anything! I provide clear, accurate, and deeply structured explanations — whether you need to solve complex math step-by-step, understand literary concepts (like proverbs and idioms), write clean code, explore scientific phenomena, or ask real-world questions.",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -198,6 +199,7 @@ export function QuickAIAssistant({
         `What are 2 common mistakes to avoid here?`,
       ]
     : [
+        '📖 What is a proverb?',
         '📐 Solve 2x^2 + 5x - 3 = 0',
         '🔬 How does CRISPR gene editing work?',
         '💻 Python function to reverse a string',
@@ -379,8 +381,42 @@ export function QuickAIAssistant({
                               : 'bg-indigo-600 text-white rounded-tr-none shadow-xs'
                           }`}
                         >
-                          <div className="whitespace-pre-line font-normal text-xs sm:text-sm">
-                            {msg.text || (
+                          <div>
+                            {msg.text ? (
+                              isAi ? (
+                                <div className="text-xs sm:text-sm text-slate-800 space-y-1.5 leading-relaxed">
+                                  <Markdown
+                                    components={{
+                                      h1: ({ children }) => <h1 className="text-sm sm:text-base font-bold text-slate-900 mt-2 mb-1">{children}</h1>,
+                                      h2: ({ children }) => <h2 className="text-xs sm:text-sm font-bold text-slate-900 mt-2 mb-1">{children}</h2>,
+                                      h3: ({ children }) => <h3 className="text-xs sm:text-sm font-bold text-indigo-900 mt-2 mb-1">{children}</h3>,
+                                      p: ({ children }) => <p className="mb-1.5 last:mb-0 leading-relaxed">{children}</p>,
+                                      ul: ({ children }) => <ul className="list-disc pl-4 space-y-0.5 mb-1.5">{children}</ul>,
+                                      ol: ({ children }) => <ol className="list-decimal pl-4 space-y-0.5 mb-1.5">{children}</ol>,
+                                      li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                                      strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+                                      code: ({ children, className }) => {
+                                        const isInline = !className && typeof children === 'string' && !children.includes('\n');
+                                        return isInline ? (
+                                          <code className="px-1.5 py-0.5 rounded bg-slate-200/80 text-indigo-700 font-mono text-[11px] font-semibold">{children}</code>
+                                        ) : (
+                                          <pre className="p-2.5 my-2 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto leading-tight">
+                                            <code>{children}</code>
+                                          </pre>
+                                        );
+                                      },
+                                      blockquote: ({ children }) => (
+                                        <blockquote className="border-l-2 border-indigo-400 pl-3 italic text-slate-600 my-1.5">{children}</blockquote>
+                                      ),
+                                    }}
+                                  >
+                                    {msg.text}
+                                  </Markdown>
+                                </div>
+                              ) : (
+                                <div className="whitespace-pre-line font-normal text-xs sm:text-sm">{msg.text}</div>
+                              )
+                            ) : (
                               <span className="inline-flex items-center space-x-1 text-slate-400">
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce" />
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />

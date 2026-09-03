@@ -20,6 +20,7 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { SubjectId, ChatMessage, NetworkStatus } from '../types';
+import Markdown from 'react-markdown';
 import { streamTutorResponse } from '../utils/aiTutorService';
 import { getLiveNetworkStatus } from '../utils/networkManager';
 import { isSpeechSynthesisSupported, speakText, stopSpeaking } from '../utils/voiceAssistant';
@@ -35,6 +36,7 @@ interface AITutorSectionProps {
 
 
 const PRESET_PROMPTS = [
+  { label: '📖 What is a proverb?', prompt: 'What is a proverb? Explain its characteristics, give classic examples with their meanings, and explain why cultures use them.', subject: 'english' as SubjectId },
   { label: '📐 Solve Equation (Quadratic)', prompt: 'Solve 2x^2 + 7x + 3 = 0 showing the exact quadratic formula method, steps, and final roots.', subject: 'mathematics' as SubjectId },
   { label: '🔬 Science: Photosynthesis', prompt: 'Why do plant leaves look green, and what is the chemical formula for photosynthesis?', subject: 'science' as SubjectId },
   { label: '💻 Coding: Python Loop & List', prompt: 'Show me how to write a Python script that filters and sorts a list of student exam scores.', subject: 'computer-studies' as SubjectId },
@@ -53,7 +55,7 @@ export function AITutorSection({
   onOpenMathSolver,
   onRecordQuestion,
 }: AITutorSectionProps) {
-  const [selectedSubject, setSelectedSubject] = useState<string>(initialSubject || 'all');
+  const [selectedSubject, setSelectedSubject] = useState<SubjectId | 'all'>(initialSubject || 'all');
   const [tone, setTone] = useState<'kids' | 'standard' | 'advanced'>('standard');
   const [input, setInput] = useState(initialQuestion || '');
   const [loading, setLoading] = useState(false);
@@ -64,7 +66,7 @@ export function AITutorSection({
     {
       id: 'welcome-msg',
       sender: 'assistant',
-      text: "👋 **Hello! I am DanAnty AI — your Universal AI Learning Assistant & Polymath.**\n\nI am equipped to answer **any question on any subject** as well as **real-world inquiries and everyday curiosity**:\n\n• **All Academic Subjects:** Math, Physics, Chemistry, Biology, History, Geography, Economics, Law, Literature, Computer Science & Coding.\n• **Languages:** English, Hausa, French, Spanish, Arabic, German, and more.\n• **Non-Academic & Real-World:** How things work, career advice, productivity tips, technology trends, writing help, and logic puzzles.\n\nType any question below or tap a suggested inquiry!",
+      text: "👋 **Hello! I am DanAnty AI — your ChatGPT-style Universal AI Tutor & Polymath.**\n\nI can answer questions across **all academic subjects**, solve math equations step-by-step, write and explain code, analyze literary concepts (such as proverbs and metaphors), and answer everyday curiosities.\n\nType any question below or tap a suggested inquiry to get started!",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -244,7 +246,7 @@ export function AITutorSection({
           <div className="space-y-1">
             <label className="text-[10px] uppercase tracking-wider text-indigo-200 font-bold">Topic / Domain</label>
             <div className="flex flex-wrap gap-1.5">
-              {[
+              {([
                 { id: 'all', label: '🌟 All & Real World' },
                 { id: 'mathematics', label: '📐 Math' },
                 { id: 'science', label: '🔬 Science' },
@@ -252,10 +254,10 @@ export function AITutorSection({
                 { id: 'history', label: '🌍 History/Social' },
                 { id: 'english', label: '✍️ English' },
                 { id: 'world-languages', label: '🗣️ Languages' },
-              ].map((s) => (
+              ] as const).map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => setSelectedSubject(s.id)}
+                  onClick={() => setSelectedSubject(s.id as SubjectId | 'all')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
                     selectedSubject === s.id
                       ? 'bg-white text-indigo-600 shadow-sm'
@@ -344,15 +346,47 @@ export function AITutorSection({
                   ? 'bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-none'
                   : 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
               }`}>
-                <div className="whitespace-pre-line font-normal">
+                <div>
                   {msg.text ? (
-                    msg.text
+                    isAi ? (
+                      <div className="text-xs sm:text-sm text-slate-800 space-y-2 leading-relaxed">
+                        <Markdown
+                          components={{
+                            h1: ({ children }) => <h1 className="text-base font-bold text-slate-900 mt-2 mb-1">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-sm font-bold text-slate-900 mt-2 mb-1">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-xs sm:text-sm font-bold text-indigo-900 mt-2 mb-1">{children}</h3>,
+                            p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                            ul: ({ children }) => <ul className="list-disc pl-5 space-y-1 mb-2">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1 mb-2">{children}</ol>,
+                            li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                            strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+                            code: ({ children, className }) => {
+                              const isInline = !className && typeof children === 'string' && !children.includes('\n');
+                              return isInline ? (
+                                <code className="px-1.5 py-0.5 rounded bg-slate-200/80 text-indigo-700 font-mono text-[11px] font-semibold">{children}</code>
+                              ) : (
+                                <pre className="p-3 my-2 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto leading-relaxed">
+                                  <code>{children}</code>
+                                </pre>
+                              );
+                            },
+                            blockquote: ({ children }) => (
+                              <blockquote className="border-l-3 border-indigo-500 pl-3 italic text-slate-600 my-2">{children}</blockquote>
+                            ),
+                          }}
+                        >
+                          {msg.text}
+                        </Markdown>
+                      </div>
+                    ) : (
+                      <div className="whitespace-pre-line font-normal text-xs sm:text-sm">{msg.text}</div>
+                    )
                   ) : loading ? (
                     <span className="inline-flex items-center space-x-1 text-slate-400">
                       <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
                       <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />
                       <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]" />
-                      <span className="text-xs ml-1.5 font-medium text-indigo-600">Generating instant response...</span>
+                      <span className="text-xs ml-1.5 font-medium text-indigo-600">Generating response...</span>
                     </span>
                   ) : (
                     <span className="text-slate-400 italic">No response received. Please try asking again.</span>

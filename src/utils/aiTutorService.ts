@@ -1,5 +1,6 @@
 import { SubjectId } from '../types';
 import { getLiveNetworkStatus, recordDataTransfer } from './networkManager';
+import { getChatGptStandardAnswer } from './chatGptKnowledgeEngine';
 
 export interface StreamTutorOptions {
   question: string;
@@ -189,24 +190,7 @@ export async function streamTutorResponse(options: StreamTutorOptions): Promise<
 }
 
 function getOfflineAnswer(question: string, subject?: SubjectId | 'all'): string {
-  const qLower = question.toLowerCase();
-  const matchedKey = Object.keys(INSTANT_KNOWLEDGE_BASE).find((k) => qLower.includes(k));
-
-  if (matchedKey) {
-    return (
-      INSTANT_KNOWLEDGE_BASE[matchedKey] +
-      '\n\n*(⚡ Instant Offline Knowledge Engine • Zero Data Used)*'
-    );
-  }
-
-  return (
-    `### 💡 Concise Explanation for "${question}"\n\n` +
-    `**Core Concept:** In **${subject && subject !== 'all' ? subject.replace('-', ' ') : 'this subject'}**, mastering the foundational formulas and definitions empowers rapid problem-solving.\n\n` +
-    `• **Key Step 1:** Identify the main principles and problem parameters.\n` +
-    `• **Key Step 2:** Apply the standard formula or grammatical rule step-by-step.\n` +
-    `• **Key Step 3:** Test with a simple verification check to ensure accuracy.\n\n` +
-    `*(⚡ DanAnty004 Offline & Cellular Data Engine is active)*`
-  );
+  return getChatGptStandardAnswer(question, subject);
 }
 
 export async function getInstantQuizFeedback(params: {
