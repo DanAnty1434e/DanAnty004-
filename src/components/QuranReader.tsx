@@ -27,6 +27,11 @@ import {
   FileText,
   Sliders,
   Award,
+  Globe,
+  Radio,
+  Share2,
+  Headphones,
+  BookCheck,
 } from 'lucide-react';
 import {
   ALL_SURAHS,
@@ -39,7 +44,6 @@ import {
   SPECIAL_AYAHS,
 } from '../data/quranData';
 import {
-  NAWAWI_HADITHS,
   SALAH_STEPS,
   DAILY_PRAYERS_TABLE,
   WUDU_STEPS,
@@ -48,6 +52,31 @@ import {
   TAJWEED_MODULES,
   ISLAMIC_EXAM_QUESTIONS,
 } from '../data/islamicStudiesData';
+import {
+  ALL_RIWAYAT,
+  ALL_RECITERS,
+  RiwayahId,
+  RiwayahMeta,
+  ReciterVoiceMeta,
+  getRiwayahById,
+  getReciterById,
+} from '../data/riwayahAndVoices';
+import {
+  ALL_HADITHS,
+  HADITH_COLLECTIONS,
+  HadithItem,
+} from '../data/hadithCatalog';
+import {
+  ISLAMIC_CURRICULUM_SUBJECTS,
+  IslamicSubjectModule,
+} from '../data/islamicCurriculumSubjects';
+import {
+  islamicAudioService,
+  AudioEngineState,
+  AudioTrackInfo,
+} from '../utils/islamicAudioService';
+import { RiwayahVoiceSelectorModal } from './RiwayahVoiceSelectorModal';
+import { IslamicGlobalAudioPlayer } from './IslamicGlobalAudioPlayer';
 
 interface QuranReaderProps {
   onClose: () => void;
@@ -55,11 +84,49 @@ interface QuranReaderProps {
   onEarnXp?: (amount: number) => void;
 }
 
-type QuranTab = 'quran' | 'hadith' | 'salah-pillars' | 'seerah-faith' | 'tajweed' | 'duas' | 'zakat' | 'exam-prep';
+type QuranTab =
+  | 'quran'
+  | 'hadith'
+  | 'subjects'
+  | 'salah-pillars'
+  | 'tajweed-riwayat'
+  | 'duas'
+  | 'zakat'
+  | 'exam-prep';
 
 export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProps) {
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<QuranTab>('quran');
+
+  // Riwayah & Voice Preferences (persisted in localStorage)
+  const [activeRiwayahId, setActiveRiwayahId] = useState<RiwayahId>(() => {
+    try {
+      const saved = localStorage.getItem('dananty_active_riwayah');
+      return (saved as RiwayahId) || 'hafs';
+    } catch {
+      return 'hafs';
+    }
+  });
+
+  const [activeReciterId, setActiveReciterId] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('dananty_active_reciter');
+      return saved || 'alafasy';
+    } catch {
+      return 'alafasy';
+    }
+  });
+
+  const [applyToAllSubjects, setApplyToAllSubjects] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('dananty_apply_audio_all_subjects');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
 
   // Quran Reader State
   const [selectedSurahNumber, setSelectedSurahNumber] = useState<number>(1);
@@ -68,17 +135,54 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
   const [surahSearch, setSurahSearch] = useState<string>('');
   const [surahFilter, setSurahFilter] = useState<'all' | 'Meccan' | 'Medinan' | 'juz30'>('all');
 
-  // Reader Preferences
+  // Reader Display Preferences
   const [arabicFontSize, setArabicFontSize] = useState<number>(28);
   const [showArabic, setShowArabic] = useState<boolean>(true);
   const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
   const [showTranslation, setShowTranslation] = useState<boolean>(true);
 
-  // Audio Playback
-  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
-  const [playingAyahNumber, setPlayingAyahNumber] = useState<number | null>(null);
-  const [audioProgress, setAudioProgress] = useState<number>(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Audio Engine State Hook
+  const [audioState, setAudioState] = useState<AudioEngineState>(() =>
+    islamicAudioService.getState()
+  );
+
+  useEffect(() => {
+    const unsub = islamicAudioService.subscribe((state) => {
+      setAudioState({ ...state });
+    });
+    return () => unsub();
+  }, []);
+
+  // Save preferences
+  const handleSelectRiwayah = (id: RiwayahId) => {
+    setActiveRiwayahId(id);
+    try {
+      localStorage.setItem('dananty_active_riwayah', id);
+    } catch {}
+  };
+
+  const handleSelectReciter = (id: string) => {
+    setActiveReciterId(id);
+    try {
+      localStorage.setItem('dananty_active_reciter', id);
+    } catch {}
+  };
+
+  const handleToggleApplyAll = (enabled: boolean) => {
+    setApplyToAllSubjects(enabled);
+    try {
+      localStorage.setItem('dananty_apply_audio_all_subjects', JSON.stringify(enabled));
+    } catch {}
+  };
+
+  // Hadith Filter & Search State
+  const [hadithSearch, setHadithSearch] = useState<string>('');
+  const [selectedHadithCollection, setSelectedHadithCollection] = useState<string>('all');
+  const [selectedHadithCategory, setSelectedHadithCategory] = useState<string>('all');
+
+  // Subjects Filter State
+  const [subjectCategoryFilter, setSubjectCategoryFilter] = useState<string>('all');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
 
   // Bookmarks & Copy
   const [bookmarkedVerses, setBookmarkedVerses] = useState<string[]>(() => {
@@ -93,7 +197,7 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
 
   // Zakat Calculator State
   const [goldGrams, setGoldGrams] = useState<number>(0);
-  const [goldPricePerGram, setGoldPricePerGram] = useState<number>(85000); // e.g. approx NGN per gram
+  const [goldPricePerGram, setGoldPricePerGram] = useState<number>(85000);
   const [cashBalance, setCashBalance] = useState<number>(0);
   const [businessAssets, setBusinessAssets] = useState<number>(0);
   const [debtsDue, setDebtsDue] = useState<number>(0);
@@ -105,16 +209,14 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
   const [quizScore, setQuizScore] = useState<number>(0);
   const [showQuizResult, setShowQuizResult] = useState<boolean>(false);
 
+  // Active Riwayah and Reciter Metadata
+  const currentRiwayah = getRiwayahById(activeRiwayahId);
+  const currentReciter = getReciterById(activeReciterId);
+
   // Load active surah data
   useEffect(() => {
     let isMounted = true;
     setIsLoadingSurah(true);
-    // Stop any ongoing audio when changing surah
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlayingAudio(false);
-      setPlayingAyahNumber(null);
-    }
 
     fetchSurahData(selectedSurahNumber).then((content) => {
       if (isMounted) {
@@ -128,7 +230,7 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
     };
   }, [selectedSurahNumber]);
 
-  // Handle Bookmarks
+  // Bookmarks handler
   const toggleBookmark = (surahNum: number, ayahNum: number) => {
     const key = `${surahNum}:${ayahNum}`;
     let updated: string[];
@@ -145,51 +247,132 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
   };
 
   // Copy helper
-  const handleCopyAyah = (arabic: string, trans: string, ref: string, key: string) => {
-    const text = `${arabic}\n\n${trans}\n(${ref}) - Read via DanAnty004 Universal Academy`;
+  const handleCopyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2500);
   };
 
-  // Audio helper
-  const playAyahAudio = (surahNum: number, ayahNum: number) => {
-    if (playingAyahNumber === ayahNum && isPlayingAudio) {
-      if (audioRef.current) audioRef.current.pause();
-      setIsPlayingAudio(false);
+  // Audio Playback Helpers
+  const playSurahAudio = (surahNum: number) => {
+    const isThisPlaying =
+      audioState.isPlaying &&
+      audioState.currentTrack?.type === 'quran' &&
+      audioState.currentTrack?.surahNumber === surahNum &&
+      !audioState.currentTrack?.ayahNumber;
+
+    if (isThisPlaying) {
+      islamicAudioService.togglePlayPause();
       return;
     }
 
-    const url = getAyahAudioUrl(surahNum, ayahNum);
-    if (!audioRef.current) {
-      audioRef.current = new Audio(url);
-    } else {
-      audioRef.current.src = url;
-    }
+    const surah = ALL_SURAHS.find((s) => s.number === surahNum);
+    const audioUrl = getSurahAudioUrl(surahNum, activeReciterId);
 
-    setPlayingAyahNumber(ayahNum);
-    setIsPlayingAudio(true);
-    audioRef.current.play().catch(() => {
-      setIsPlayingAudio(false);
-      setPlayingAyahNumber(null);
-    });
-
-    audioRef.current.onended = () => {
-      setIsPlayingAudio(false);
-      setPlayingAyahNumber(null);
-      // Auto-advance to next ayah if available
-      if (surahContent && ayahNum < surahContent.verses.length) {
-        playAyahAudio(surahNum, ayahNum + 1);
-      }
+    const track: AudioTrackInfo = {
+      id: `surah-${surahNum}`,
+      type: 'quran',
+      title: `Surah ${surah?.transliteration || surahNum} (${surah?.name})`,
+      subtitle: `${currentRiwayah.nameArabic} • ${currentReciter.nameEnglish}`,
+      riwayahId: activeRiwayahId,
+      reciterId: activeReciterId,
+      audioUrl,
+      surahNumber: surahNum,
     };
+
+    islamicAudioService.playQuran(track);
+    if (onEarnXp) onEarnXp(15);
   };
 
-  const stopAllAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
+  const playAyahAudio = (surahNum: number, ayahNum: number) => {
+    const isThisPlaying =
+      audioState.isPlaying &&
+      audioState.currentTrack?.type === 'quran' &&
+      audioState.currentTrack?.surahNumber === surahNum &&
+      audioState.currentTrack?.ayahNumber === ayahNum;
+
+    if (isThisPlaying) {
+      islamicAudioService.togglePlayPause();
+      return;
     }
-    setIsPlayingAudio(false);
-    setPlayingAyahNumber(null);
+
+    const surah = ALL_SURAHS.find((s) => s.number === surahNum);
+    const audioUrl = getAyahAudioUrl(surahNum, ayahNum, activeReciterId);
+
+    const track: AudioTrackInfo = {
+      id: `ayah-${surahNum}-${ayahNum}`,
+      type: 'quran',
+      title: `${surah?.transliteration || 'Surah'} ${surahNum}:${ayahNum}`,
+      subtitle: `${currentRiwayah.nameEnglish} • ${currentReciter.nameEnglish}`,
+      riwayahId: activeRiwayahId,
+      reciterId: activeReciterId,
+      audioUrl,
+      surahNumber: surahNum,
+      ayahNumber: ayahNum,
+    };
+
+    islamicAudioService.playQuran(track);
+  };
+
+  const playHadithAudio = (hadith: HadithItem) => {
+    const isThisPlaying =
+      audioState.isPlaying &&
+      audioState.currentTrack?.id === `hadith-${hadith.id}`;
+
+    if (isThisPlaying) {
+      islamicAudioService.togglePlayPause();
+      return;
+    }
+
+    const track: AudioTrackInfo = {
+      id: `hadith-${hadith.id}`,
+      type: 'hadith',
+      title: hadith.title,
+      subtitle: `${hadith.collectionTitle} • ${currentRiwayah.nameArabic} Pronunciation`,
+      arabicText: hadith.arabic,
+      englishText: `Translation: ${hadith.english}. Narrated by ${hadith.narrator}. Lessons: ${hadith.keyLessons.join('. ')}`,
+      riwayahId: activeRiwayahId,
+      reciterId: activeReciterId,
+    };
+
+    islamicAudioService.playSpeechOrAudio(track, 'arabic-then-english');
+    if (onEarnXp) onEarnXp(15);
+  };
+
+  const playSubjectLessonAudio = (subject: IslamicSubjectModule) => {
+    const isThisPlaying =
+      audioState.isPlaying &&
+      audioState.currentTrack?.id === `subject-${subject.id}`;
+
+    if (isThisPlaying) {
+      islamicAudioService.togglePlayPause();
+      return;
+    }
+
+    // If an embedded Quranic verse is present, play it with the chosen Reciter and Riwayah
+    let audioUrl: string | undefined = undefined;
+    if (subject.audioVerseRef) {
+      audioUrl = getAyahAudioUrl(subject.audioVerseRef.surah, subject.audioVerseRef.ayah, activeReciterId);
+    }
+
+    const track: AudioTrackInfo = {
+      id: `subject-${subject.id}`,
+      type: 'subject',
+      title: subject.title,
+      subtitle: `${subject.category} • Voice: ${currentReciter.nameEnglish} (${currentRiwayah.nameArabic})`,
+      arabicText: subject.arabicKeyText || subject.arabicTitle,
+      englishText: `${subject.title}. ${subject.englishExplanation}. Key Principles: ${subject.corePrinciples.map((p) => `${p.heading}: ${p.details}`).join('. ')}`,
+      audioUrl: audioUrl,
+      riwayahId: activeRiwayahId,
+      reciterId: activeReciterId,
+    };
+
+    if (audioUrl) {
+      islamicAudioService.playQuran(track);
+    } else {
+      islamicAudioService.playSpeechOrAudio(track, 'arabic-then-english');
+    }
+    if (onEarnXp) onEarnXp(20);
   };
 
   // Filtered Surahs
@@ -210,6 +393,28 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
     return true;
   });
 
+  // Filtered Hadiths
+  const filteredHadiths = ALL_HADITHS.filter((h) => {
+    const query = hadithSearch.toLowerCase().trim();
+    const matchesQuery =
+      query === '' ||
+      h.title.toLowerCase().includes(query) ||
+      h.english.toLowerCase().includes(query) ||
+      h.narrator.toLowerCase().includes(query) ||
+      h.arabic.includes(query);
+
+    if (!matchesQuery) return false;
+    if (selectedHadithCollection !== 'all' && h.collection !== selectedHadithCollection) return false;
+    if (selectedHadithCategory !== 'all' && h.category !== selectedHadithCategory) return false;
+    return true;
+  });
+
+  // Filtered Subjects
+  const filteredSubjects = ISLAMIC_CURRICULUM_SUBJECTS.filter((s) => {
+    if (subjectCategoryFilter === 'all') return true;
+    return s.category === subjectCategoryFilter;
+  });
+
   // Calculate Zakat
   const goldValue = goldGrams * goldPricePerGram;
   const totalWealth = cashBalance + goldValue + businessAssets - debtsDue;
@@ -218,9 +423,9 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
   const zakatDue = isZakatEligible ? totalWealth * 0.025 : 0;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-['Plus_Jakarta_Sans',sans-serif] pb-16">
+    <div className="min-h-screen bg-slate-900 text-slate-100 font-['Plus_Jakarta_Sans',sans-serif] pb-28">
       {/* Ornate Top Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-950 border-b border-emerald-800/60 sticky top-0 z-30 shadow-lg">
+      <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-950 border-b border-emerald-800/60 sticky top-0 z-30 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-700/80 border border-emerald-400/40 flex items-center justify-center text-emerald-200 shadow-md">
@@ -229,26 +434,49 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-black text-white tracking-tight">
-                  Al-Qur'an al-Kareem & Islamic Studies
+                  Al-Qur'an al-Kareem & Islamic Studies Hub
                 </h1>
                 <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                  Universal Deen Hub
+                  Universal Deen
                 </span>
               </div>
               <p className="text-xs text-emerald-200/80 font-['Amiri',serif] tracking-wider text-right sm:text-left">
-                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ • المصحف الشريف والعلوم الإسلامية
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ • المصحف الشريف والحديث والعلوم الشرعية
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Riwayah & Voice Button */}
             <button
-              onClick={() => onAskAITutor('Please explain the core teachings of Islam, the Quran, and Hadith in detail.', 'Islamic Studies Overview')}
+              onClick={() => setIsVoiceModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-700/50 hover:bg-emerald-600/70 text-emerald-100 border border-emerald-500/50 flex items-center gap-1.5 transition shadow-sm"
+              title="Change Riwayah and Reciter Voice"
+            >
+              <Radio className="w-3.5 h-3.5 text-amber-300" />
+              <span className="hidden sm:inline font-['Amiri',serif] text-sm">
+                {currentRiwayah.nameArabic}
+              </span>
+              <span className="hidden md:inline text-slate-300 text-[10px]">
+                ({currentReciter.nameEnglish})
+              </span>
+              <span className="sm:hidden">Riwayah & Voice</span>
+            </button>
+
+            <button
+              onClick={() =>
+                onAskAITutor(
+                  'Please explain the core teachings of Islam, the Holy Quran, and the authentic Sunnah in detail.',
+                  'Islamic Studies Overview'
+                )
+              }
               className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 flex items-center gap-1.5 transition"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Ask Islamic AI Tutor</span>
+              <span className="hidden sm:inline">Ask Islamic AI Tutor</span>
+              <span className="sm:hidden">AI Tutor</span>
             </button>
+
             <button
               onClick={onClose}
               className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
@@ -281,7 +509,19 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>40 Hadith of An-Nawawi (الحديث)</span>
+            <span>Hadith Library (كتب الحديث)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('subjects')}
+            className={`px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap transition ${
+              activeTab === 'subjects'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <BookCheck className="w-3.5 h-3.5" />
+            <span>All Islamic Subjects (العلوم الشرعية)</span>
           </button>
 
           <button
@@ -293,31 +533,19 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Salah & Pillars of Islam (الصلاة)</span>
+            <span>Salah & Wudu (الصلاة والوضوء)</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('seerah-faith')}
+            onClick={() => setActiveTab('tajweed-riwayat')}
             className={`px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap transition ${
-              activeTab === 'seerah-faith'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span>Seerah & 25 Prophets (الأنبياء)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('tajweed')}
-            className={`px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap transition ${
-              activeTab === 'tajweed'
+              activeTab === 'tajweed-riwayat'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Tajweed Rules (التجويد)</span>
+            <span>Tajweed & 10 Qira'at (التجويد والقراءات)</span>
           </button>
 
           <button
@@ -353,11 +581,12 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Islamic Exam CBT Quiz</span>
+            <span>Islamic CBT Exam</span>
           </button>
         </div>
       </div>
 
+      {/* Main View Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
         {/* ==================================================== */}
         {/* TAB 1: HOLY QURAN READER                             */}
@@ -394,7 +623,9 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                   <button
                     onClick={() => setSurahFilter('all')}
                     className={`px-2 py-1 rounded-lg font-medium transition ${
-                      surahFilter === 'all' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
+                      surahFilter === 'all'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
                     All (114)
@@ -402,7 +633,9 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                   <button
                     onClick={() => setSurahFilter('juz30')}
                     className={`px-2 py-1 rounded-lg font-medium transition ${
-                      surahFilter === 'juz30' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
+                      surahFilter === 'juz30'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
                     Juz 'Amma (78-114)
@@ -410,7 +643,9 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                   <button
                     onClick={() => setSurahFilter('Meccan')}
                     className={`px-2 py-1 rounded-lg font-medium transition ${
-                      surahFilter === 'Meccan' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
+                      surahFilter === 'Meccan'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
                     Meccan (Makki)
@@ -418,7 +653,9 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                   <button
                     onClick={() => setSurahFilter('Medinan')}
                     className={`px-2 py-1 rounded-lg font-medium transition ${
-                      surahFilter === 'Medinan' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
+                      surahFilter === 'Medinan'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-900 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
                     Medinan (Madani)
@@ -497,9 +734,9 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
 
             {/* Right Main Column: Surah Content Viewer */}
             <div className="lg:col-span-8 space-y-4">
-              {/* Surah Header & Control Bar */}
               {surahContent && (
                 <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 sm:p-6 shadow-sm">
+                  {/* Surah Header & Control Bar */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-700 pb-4 mb-4">
                     <div className="text-center sm:text-left">
                       <div className="flex items-center gap-2 justify-center sm:justify-start">
@@ -524,19 +761,16 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
 
                   {/* Reading Preferences & Audio Controls Bar */}
                   <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                    {/* Audio Recitation Player */}
+                    {/* Audio Recitation Player with Chosen Reciter */}
                     <div className="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700">
                       <button
-                        onClick={() => {
-                          if (isPlayingAudio) {
-                            stopAllAudio();
-                          } else {
-                            playAyahAudio(surahContent.meta.number, 1);
-                          }
-                        }}
+                        onClick={() => playSurahAudio(surahContent.meta.number)}
                         className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 hover:text-emerald-200"
                       >
-                        {isPlayingAudio ? (
+                        {audioState.isPlaying &&
+                        audioState.currentTrack?.type === 'quran' &&
+                        audioState.currentTrack?.surahNumber === surahContent.meta.number &&
+                        !audioState.currentTrack?.ayahNumber ? (
                           <>
                             <Pause className="w-3.5 h-3.5 fill-emerald-400" />
                             <span>Pause Recitation</span>
@@ -544,13 +778,19 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                         ) : (
                           <>
                             <Play className="w-3.5 h-3.5 fill-emerald-400" />
-                            <span>Play Surah Recitation</span>
+                            <span>Play Full Surah</span>
                           </>
                         )}
                       </button>
-                      <span className="text-[10px] text-slate-400 border-l border-slate-700 pl-2">
-                        Sheikh Mishary Alafasy
-                      </span>
+
+                      <button
+                        onClick={() => setIsVoiceModalOpen(true)}
+                        className="text-[10px] text-amber-300 hover:text-amber-200 border-l border-slate-700 pl-2 font-medium flex items-center gap-1"
+                        title="Change voice or narration"
+                      >
+                        <span>{currentReciter.nameEnglish}</span>
+                        <span className="text-slate-400">({currentRiwayah.nameArabic})</span>
+                      </button>
                     </div>
 
                     {/* Font Size & Display Toggles */}
@@ -559,75 +799,77 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                         <button
                           onClick={() => setArabicFontSize((prev) => Math.max(20, prev - 2))}
                           className="px-2 py-1 text-slate-300 hover:text-white font-bold"
-                          title="Decrease Arabic font size"
+                          title="Decrease Arabic text size"
                         >
                           A-
                         </button>
-                        <span className="px-1 text-[10px] text-slate-400">{arabicFontSize}px</span>
+                        <span className="px-1 text-[11px] text-slate-400">{arabicFontSize}px</span>
                         <button
                           onClick={() => setArabicFontSize((prev) => Math.min(42, prev + 2))}
                           className="px-2 py-1 text-slate-300 hover:text-white font-bold"
-                          title="Increase Arabic font size"
+                          title="Increase Arabic text size"
                         >
                           A+
                         </button>
                       </div>
 
                       <button
-                        onClick={() => setShowTransliteration(!showTransliteration)}
-                        className={`px-2.5 py-1.5 rounded-xl border font-semibold transition ${
-                          showTransliteration
-                            ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
-                            : 'bg-slate-900 border-slate-700 text-slate-400'
+                        onClick={() => setShowTranslation((prev) => !prev)}
+                        className={`px-2.5 py-1.5 rounded-xl border font-bold text-[11px] transition ${
+                          showTranslation
+                            ? 'bg-emerald-600/30 text-emerald-200 border-emerald-500/40'
+                            : 'bg-slate-900 text-slate-400 border-slate-700'
                         }`}
-                        title="Toggle Roman transliteration"
                       >
-                        Translit
+                        Translation
                       </button>
 
                       <button
-                        onClick={() => setShowTranslation(!showTranslation)}
-                        className={`px-2.5 py-1.5 rounded-xl border font-semibold transition ${
-                          showTranslation
-                            ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
-                            : 'bg-slate-900 border-slate-700 text-slate-400'
+                        onClick={() => setShowTransliteration((prev) => !prev)}
+                        className={`px-2.5 py-1.5 rounded-xl border font-bold text-[11px] transition ${
+                          showTransliteration
+                            ? 'bg-emerald-600/30 text-emerald-200 border-emerald-500/40'
+                            : 'bg-slate-900 text-slate-400 border-slate-700'
                         }`}
-                        title="Toggle English translation"
                       >
-                        English
+                        Translit
                       </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Bismillah Card (Precedes all Surahs except At-Tawbah 9 and Al-Fatiha 1) */}
-              {surahContent && surahContent.bismillahPre && (
-                <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-6 text-center shadow-xs">
-                  <div className="font-['Amiri',serif] text-2xl sm:text-3xl text-emerald-300 leading-relaxed">
+              {/* Bismillah Banner */}
+              {surahContent?.bismillahPre && (
+                <div className="text-center py-6 px-4 bg-slate-800/50 border border-slate-700/60 rounded-2xl shadow-sm">
+                  <div className="font-['Amiri',serif] text-2xl sm:text-3xl text-emerald-300 tracking-wider">
                     بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    In the name of Allah, the Entirely Merciful, the Especially Merciful.
-                  </p>
+                  <div className="text-xs text-slate-400 mt-1 italic">
+                    In the name of Allah, the Entirely Merciful, the Especially Merciful
+                  </div>
                 </div>
               )}
 
               {/* Loading State */}
               {isLoadingSurah && (
-                <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-12 text-center">
-                  <div className="inline-block animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mb-3" />
-                  <p className="text-sm font-semibold text-slate-300">Loading Holy Qur'an verses...</p>
+                <div className="p-12 text-center text-slate-400 text-xs">
+                  <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  Loading Surah text and authentic narrations...
                 </div>
               )}
 
               {/* Verses List */}
               {surahContent && !isLoadingSurah && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {surahContent.verses.map((ayah) => {
-                    const isBookmarked = bookmarkedVerses.includes(`${surahContent.meta.number}:${ayah.numberInSurah}`);
-                    const isAyahPlaying = isPlayingAudio && playingAyahNumber === ayah.numberInSurah;
-                    const ayahKey = `${surahContent.meta.number}-${ayah.numberInSurah}`;
+                    const ayahKey = `${surahContent.meta.number}:${ayah.numberInSurah}`;
+                    const isBookmarked = bookmarkedVerses.includes(ayahKey);
+                    const isAyahPlaying =
+                      audioState.isPlaying &&
+                      audioState.currentTrack?.type === 'quran' &&
+                      audioState.currentTrack?.surahNumber === surahContent.meta.number &&
+                      audioState.currentTrack?.ayahNumber === ayah.numberInSurah;
 
                     return (
                       <div
@@ -635,30 +877,26 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                         id={`ayah-${ayah.numberInSurah}`}
                         className={`p-4 sm:p-5 rounded-2xl border transition ${
                           isAyahPlaying
-                            ? 'bg-emerald-950/70 border-emerald-500 shadow-md ring-1 ring-emerald-500'
-                            : 'bg-slate-800/70 border-slate-700/70 hover:border-slate-600'
+                            ? 'bg-emerald-950/60 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md'
+                            : 'bg-slate-800/80 border-slate-700/80 hover:border-slate-650'
                         }`}
                       >
-                        {/* Ayah Meta & Action Bar */}
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-700/50 mb-3 text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="w-7 h-7 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700/60 flex items-center justify-center font-bold text-xs">
-                              {ayah.numberInSurah}
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              {surahContent.meta.transliteration} : {ayah.numberInSurah}
-                            </span>
-                          </div>
+                        {/* Ayah Action Header */}
+                        <div className="flex items-center justify-between border-b border-slate-700/60 pb-2.5 mb-3">
+                          <span className="w-7 h-7 rounded-xl bg-slate-900 border border-slate-700 text-emerald-300 font-bold text-xs flex items-center justify-center">
+                            {ayah.numberInSurah}
+                          </span>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
+                            {/* Play Verse Recitation in Active Riwayah Voice */}
                             <button
                               onClick={() => playAyahAudio(surahContent.meta.number, ayah.numberInSurah)}
                               className={`p-1.5 rounded-lg border transition ${
                                 isAyahPlaying
-                                  ? 'bg-emerald-600 text-white border-emerald-500'
-                                  : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'
+                                  ? 'bg-emerald-500 text-slate-950 font-bold border-emerald-400'
+                                  : 'bg-slate-900 border-slate-700 text-emerald-400 hover:text-emerald-300'
                               }`}
-                              title="Listen to this verse"
+                              title={`Listen to verse in ${currentRiwayah.nameEnglish} by ${currentReciter.nameEnglish}`}
                             >
                               {isAyahPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                             </button>
@@ -677,10 +915,8 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
 
                             <button
                               onClick={() =>
-                                handleCopyAyah(
-                                  ayah.arabic,
-                                  ayah.translation,
-                                  `${surahContent.meta.transliteration} ${surahContent.meta.number}:${ayah.numberInSurah}`,
+                                handleCopyText(
+                                  `${ayah.arabic}\n\n${ayah.translation}\n(${surahContent.meta.transliteration} ${surahContent.meta.number}:${ayah.numberInSurah})`,
                                   ayahKey
                                 )
                               }
@@ -705,7 +941,7 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                               title="Ask AI Tutor for Tafsir"
                             >
                               <Sparkles className="w-3 h-3 text-amber-300" />
-                              <span className="hidden sm:inline">Tafsir / Explanation</span>
+                              <span className="hidden sm:inline">Tafsir</span>
                             </button>
                           </div>
                         </div>
@@ -747,115 +983,431 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
         )}
 
         {/* ==================================================== */}
-        {/* TAB 2: 40 HADITH OF AN-NAWAWI                        */}
+        {/* TAB 2: HADITH LIBRARY & VOICE LISTENING              */}
         {/* ==================================================== */}
         {activeTab === 'hadith' && (
           <div className="space-y-6">
-            <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border border-emerald-800/60 rounded-2xl p-6 shadow-sm">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border border-emerald-800/60 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="max-w-3xl">
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  الأربعون النووية • Al-Arba'een An-Nawawiyyah
-                </span>
-                <h2 className="text-xl sm:text-2xl font-black text-white mt-2">
-                  The 40 Hadiths of Imam An-Nawawi
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    كُتُب الحَدِيثِ النَّبَوِيِّ الشَّرِيفِ
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Voice & Audio Enabled
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white">
+                  Hadith Reader & Audio Hub
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
-                  Compiled by Imam Yahya ibn Sharaf an-Nawawi (d. 676 AH), these foundational traditions encapsulate the core principles of Islamic jurisprudence, spiritual sincerity, and ethical manners.
+                  Explore canonical traditions from <strong>The 40 Hadith of An-Nawawi</strong>, <strong>Sahih al-Bukhari</strong>, <strong>Sahih Muslim</strong>, and <strong>Riyad as-Salihin</strong>. Listen to any Hadith in your selected Arabic narration and English translation.
                 </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsVoiceModalOpen(true)}
+                  className="px-3 py-2 rounded-xl bg-emerald-800/60 hover:bg-emerald-700/60 border border-emerald-500/40 text-xs font-bold text-emerald-200 flex items-center gap-2 transition"
+                >
+                  <Headphones className="w-4 h-4 text-emerald-300" />
+                  <span>Voice Settings</span>
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {NAWAWI_HADITHS.map((hadith) => (
-                <div
-                  key={hadith.id}
-                  className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-sm space-y-4 hover:border-emerald-500/60 transition"
+            {/* Filter and Search Bar */}
+            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={hadithSearch}
+                  onChange={(e) => setHadithSearch(e.target.value)}
+                  placeholder="Search Hadith by title, narrator, text, or lesson..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Collection Selector */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedHadithCollection}
+                  onChange={(e) => setSelectedHadithCollection(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-hidden focus:border-emerald-500"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-950 text-emerald-300 border border-emerald-700/50">
-                      Hadith #{hadith.id}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">
-                      Narrated by {hadith.narrator}
-                    </span>
-                  </div>
+                  <option value="all">All Hadith Collections ({ALL_HADITHS.length})</option>
+                  <option value="nawawi40">40 Hadith An-Nawawi</option>
+                  <option value="bukhari">Sahih al-Bukhari</option>
+                  <option value="muslim">Sahih Muslim</option>
+                  <option value="riyad">Riyad as-Salihin</option>
+                </select>
 
-                  <h3 className="text-sm font-bold text-white">{hadith.title}</h3>
+                <select
+                  value={selectedHadithCategory}
+                  onChange={(e) => setSelectedHadithCategory(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-hidden focus:border-emerald-500"
+                >
+                  <option value="all">All Topics</option>
+                  <option value="Faith & Tawhid">Faith & Tawhid</option>
+                  <option value="Manners & Character">Manners & Character</option>
+                  <option value="Salah & Purification">Salah & Purification</option>
+                  <option value="Knowledge & Wisdom">Knowledge & Wisdom</option>
+                  <option value="Sincerity & Intentions">Sincerity & Intentions</option>
+                  <option value="Charity & Social Justice">Charity & Social Justice</option>
+                  <option value="Dhikr & Dua">Dhikr & Dua</option>
+                </select>
+              </div>
+            </div>
 
+            {/* Hadiths Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {filteredHadiths.map((hadith) => {
+                const isPlaying =
+                  audioState.isPlaying &&
+                  audioState.currentTrack?.id === `hadith-${hadith.id}`;
+
+                return (
                   <div
-                    dir="rtl"
-                    className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 font-['Amiri',serif] text-base text-right text-emerald-100 leading-relaxed"
+                    key={hadith.id}
+                    className={`bg-slate-800/80 border rounded-2xl p-5 shadow-sm space-y-4 transition ${
+                      isPlaying
+                        ? 'border-emerald-500 ring-1 ring-emerald-500/50 bg-emerald-950/40'
+                        : 'border-slate-700/80 hover:border-slate-600'
+                    }`}
                   >
-                    {hadith.arabic}
-                  </div>
+                    <div className="flex items-center justify-between border-b border-slate-700/70 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-black bg-emerald-950 text-emerald-300 border border-emerald-700/50">
+                          {hadith.collectionTitle}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          #{hadith.numberInCollection}
+                        </span>
+                      </div>
 
-                  <div className="text-xs text-slate-200 leading-relaxed">
-                    <strong className="text-emerald-300 block mb-1">Translation:</strong>
-                    "{hadith.english}"
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
-                    <div className="font-bold text-amber-300 mb-1.5 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Key Lessons & Reflections:</span>
+                      <span className="text-[11px] text-amber-300 font-semibold">
+                        {hadith.grade}
+                      </span>
                     </div>
-                    <ul className="space-y-1 text-slate-300">
-                      {hadith.keyLessons.map((lesson, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5 text-[11px]">
-                          <span className="text-emerald-400 font-bold">•</span>
-                          <span>{lesson}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-700/60 text-xs">
-                    <button
-                      onClick={() => {
-                        const copyText = `${hadith.title}\n\nArabic:\n${hadith.arabic}\n\nEnglish:\n"${hadith.english}"\n\n(Narrated by ${hadith.narrator})`;
-                        navigator.clipboard.writeText(copyText);
-                        setCopiedKey(`hadith-${hadith.id}`);
-                        setTimeout(() => setCopiedKey(null), 2000);
-                      }}
-                      className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white flex items-center gap-1 text-[11px]"
-                    >
-                      {copiedKey === `hadith-${hadith.id}` ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span>Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Copy Hadith</span>
-                        </>
-                      )}
-                    </button>
+                    <div>
+                      <h3 className="text-sm font-bold text-white mb-1">{hadith.title}</h3>
+                      <div className="text-xs text-slate-400">
+                        Narrated by <strong>{hadith.narrator}</strong> • {hadith.chapter}
+                      </div>
+                    </div>
 
-                    <button
-                      onClick={() =>
-                        onAskAITutor(
-                          `Please explain Hadith ${hadith.id} of Imam An-Nawawi ("${hadith.title}") in depth. Include the context, narrator biography, and real-life application today.`,
-                          hadith.title
-                        )
-                      }
-                      className="text-emerald-400 hover:text-emerald-300 font-bold text-[11px] flex items-center gap-1"
+                    {/* Arabic Text with Tashkeel */}
+                    <div
+                      dir="rtl"
+                      className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 font-['Amiri',serif] text-base text-right text-emerald-100 leading-relaxed"
                     >
-                      <span>Ask AI Tutor</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
+                      {hadith.arabic}
+                    </div>
+
+                    {/* English Translation */}
+                    <div className="text-xs text-slate-200 leading-relaxed">
+                      <strong className="text-emerald-300 block mb-1">Translation:</strong>
+                      "{hadith.english}"
+                    </div>
+
+                    {/* Key Lessons */}
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+                      <div className="font-bold text-amber-300 mb-1.5 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Key Lessons & Prophetic Guidance:</span>
+                      </div>
+                      <ul className="space-y-1 text-slate-300">
+                        {hadith.keyLessons.map((lesson, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5 text-[11px]">
+                            <span className="text-emerald-400 font-bold">•</span>
+                            <span>{lesson}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-700/60 text-xs">
+                      {/* Audio Play Button */}
+                      <button
+                        onClick={() => playHadithAudio(hadith)}
+                        className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 text-xs transition ${
+                          isPlaying
+                            ? 'bg-emerald-500 text-slate-950 font-black'
+                            : 'bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40'
+                        }`}
+                        title="Listen to this Hadith in selected voice and translation"
+                      >
+                        {isPlaying ? (
+                          <>
+                            <Pause className="w-3.5 h-3.5 fill-slate-950" />
+                            <span>Pause Audio</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-emerald-400" />
+                            <span>Listen to Hadith</span>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            handleCopyText(
+                              `${hadith.title}\n\nArabic:\n${hadith.arabic}\n\nEnglish:\n"${hadith.english}"\n\nReference: ${hadith.reference}`,
+                              hadith.id
+                            )
+                          }
+                          className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white transition"
+                          title="Copy Hadith"
+                        >
+                          {copiedKey === hadith.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            onAskAITutor(
+                              `Please explain this Hadith in depth: "${hadith.title}" (${hadith.reference}). Explain the Arabic keywords, theological and jurisprudential lessons, and how to practice it daily.`,
+                              hadith.title
+                            )
+                          }
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-[11px] font-bold text-emerald-300 hover:bg-slate-800 transition flex items-center gap-1"
+                        >
+                          <Sparkles className="w-3 h-3 text-amber-300" />
+                          <span>Sharh / AI Tafsir</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* ==================================================== */}
-        {/* TAB 3: SALAH & PILLARS OF ISLAM                      */}
+        {/* TAB 3: ALL ISLAMIC CURRICULUM SUBJECTS               */}
+        {/* ==================================================== */}
+        {activeTab === 'subjects' && (
+          <div className="space-y-6">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-900 border border-emerald-800/60 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="max-w-3xl">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  المَنْهَجُ الشَّامِلُ لِلعُلُومِ الإِسْلَامِيَّةِ
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-white mt-2">
+                  All Islamic Studies Curriculum Hub
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+                  Comprehensive academic subjects spanning <strong>Fiqh</strong>, <strong>Aqeedah & Tawhid</strong>, <strong>Ulum al-Qur'an</strong>, <strong>Mustalah al-Hadith</strong>, <strong>Seerah & History</strong>, and <strong>Akhlaq</strong>. Complete with vocal audio narrations matching your selected voice.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsVoiceModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-emerald-800/70 hover:bg-emerald-700 border border-emerald-500/40 text-xs font-bold text-emerald-100 flex items-center gap-2 transition"
+              >
+                <Radio className="w-4 h-4 text-amber-300" />
+                <span>Voice: {currentReciter.nameEnglish}</span>
+              </button>
+            </div>
+
+            {/* Subject Categories Bar */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              {[
+                { id: 'all', label: 'All Subjects (All)' },
+                { id: 'Fiqh', label: 'Fiqh (Jurisprudence)' },
+                { id: 'Aqeedah', label: 'Aqeedah & Tawhid (Theology)' },
+                { id: 'Ulum-al-Quran', label: 'Ulum al-Qur\'an (Quranic Sciences)' },
+                { id: 'Hadith-Sciences', label: 'Mustalah al-Hadith (Hadith Sciences)' },
+                { id: 'Seerah-History', label: 'Seerah & Caliphs (History)' },
+                { id: 'Akhlaq-Adab', label: 'Akhlaq & Adab (Character)' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSubjectCategoryFilter(cat.id)}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                    subjectCategoryFilter === cat.id
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Subjects Modules List */}
+            <div className="space-y-6">
+              {filteredSubjects.map((subject) => {
+                const isPlaying =
+                  audioState.isPlaying &&
+                  audioState.currentTrack?.id === `subject-${subject.id}`;
+
+                return (
+                  <div
+                    key={subject.id}
+                    className={`bg-slate-800/80 border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4 transition ${
+                      isPlaying
+                        ? 'border-emerald-500 ring-1 ring-emerald-500/40 bg-emerald-950/30'
+                        : 'border-slate-700/80'
+                    }`}
+                  >
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/70 pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-900 text-emerald-400 border border-slate-700">
+                            {subject.code}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                            {subject.badge}
+                          </span>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-black text-white mt-1">
+                          {subject.title}
+                        </h3>
+                      </div>
+
+                      <div className="text-left sm:text-right">
+                        <div className="font-['Amiri',serif] text-xl font-bold text-emerald-300">
+                          {subject.arabicTitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                      {subject.summary}
+                    </p>
+
+                    {/* Scriptural Evidence Key Text (with Riwayah recitation audio) */}
+                    {subject.arabicKeyText && (
+                      <div className="p-4 rounded-xl bg-slate-950/80 border border-emerald-900/60 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[11px] font-bold text-amber-300">
+                            {subject.audioVerseRef ? subject.audioVerseRef.label : 'Foundational Scriptural Evidence'}
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-['Amiri',serif]">
+                            {currentRiwayah.nameArabic}
+                          </span>
+                        </div>
+
+                        <div
+                          dir="rtl"
+                          className="font-['Amiri',serif] text-lg text-right text-emerald-100 leading-relaxed py-1"
+                        >
+                          {subject.arabicKeyText}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Explanation */}
+                    <div className="text-xs text-slate-200 leading-relaxed">
+                      {subject.englishExplanation}
+                    </div>
+
+                    {/* Core Principles Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                      {subject.corePrinciples.map((principle, pIdx) => (
+                        <div
+                          key={pIdx}
+                          className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-emerald-300">
+                              {principle.heading}
+                            </h4>
+                            {principle.arabicTerm && (
+                              <span className="font-['Amiri',serif] text-xs text-amber-200">
+                                {principle.arabicTerm}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-300 leading-relaxed">
+                            {principle.details}
+                          </p>
+                          {principle.evidence && (
+                            <div className="text-[10px] text-emerald-400/90 italic pt-1 border-t border-slate-800">
+                              Evidence: {principle.evidence}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Practical Application */}
+                    <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-xs text-slate-200 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-amber-300">Practical Daily Application:</strong>{' '}
+                        <span>{subject.practicalApplication}</span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-700/60 text-xs">
+                      {/* Listen to lesson in chosen voice */}
+                      <button
+                        onClick={() => playSubjectLessonAudio(subject)}
+                        className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition ${
+                          isPlaying
+                            ? 'bg-emerald-500 text-slate-950 font-black'
+                            : 'bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40'
+                        }`}
+                        title="Listen to this lesson and Quranic evidence in your selected voice"
+                      >
+                        {isPlaying ? (
+                          <>
+                            <Pause className="w-3.5 h-3.5 fill-slate-950" />
+                            <span>Pause Lesson Audio</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-emerald-400" />
+                            <span>Listen to Lesson ({currentReciter.nameEnglish})</span>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            onAskAITutor(
+                              `Please provide an in-depth lesson on ${subject.title} (${subject.arabicTitle}). Cover the jurisprudential details, scholarly differences among the 4 Madhabs, and common contemporary questions.`,
+                              subject.title
+                            )
+                          }
+                          className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-emerald-300 font-bold hover:bg-slate-800 transition flex items-center gap-1.5"
+                        >
+                          <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Ask Islamic AI Tutor</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* TAB 4: SALAH & WUDU GUIDE                            */}
         {/* ==================================================== */}
         {activeTab === 'salah-pillars' && (
           <div className="space-y-6">
+            {/* Daily Prayers Table */}
             <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6">
               <h2 className="text-xl font-black text-white flex items-center gap-2">
                 <Layers className="w-5 h-5 text-emerald-400" />
@@ -865,7 +1417,6 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                 Salah is the second pillar of Islam and the primary link between a servant and Allah.
               </p>
 
-              {/* Prayers Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead className="bg-slate-900/80 text-emerald-300 border-b border-slate-700">
@@ -882,8 +1433,12 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
                       <tr key={idx} className="hover:bg-slate-750">
                         <td className="py-2.5 px-3 font-bold text-white">{item.prayer}</td>
                         <td className="py-2.5 px-3 font-black text-emerald-400">{item.fard} Rak'ahs</td>
-                        <td className="py-2.5 px-3 text-slate-300">{item.sunnahBefore > 0 ? `${item.sunnahBefore} Rak'ahs` : '—'}</td>
-                        <td className="py-2.5 px-3 text-slate-300">{item.sunnahAfter > 0 ? `${item.sunnahAfter} Rak'ahs` : '—'}</td>
+                        <td className="py-2.5 px-3 text-slate-300">
+                          {item.sunnahBefore > 0 ? `${item.sunnahBefore} Rak'ahs` : '—'}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-300">
+                          {item.sunnahAfter > 0 ? `${item.sunnahAfter} Rak'ahs` : '—'}
+                        </td>
                         <td className="py-2.5 px-3 text-slate-400">{item.time}</td>
                       </tr>
                     ))}
@@ -939,7 +1494,7 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
               </div>
             </div>
 
-            {/* Wudu (Ablution) Protocol */}
+            {/* Wudu Protocol */}
             <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 space-y-4">
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-emerald-400" />
@@ -964,70 +1519,78 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
         )}
 
         {/* ==================================================== */}
-        {/* TAB 4: SEERAH & 25 PROPHETS                          */}
+        {/* TAB 5: TAJWEED & RIWAYAT GUIDE                       */}
         {/* ==================================================== */}
-        {activeTab === 'seerah-faith' && (
+        {activeTab === 'tajweed-riwayat' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border border-emerald-800/60 rounded-2xl p-6">
-              <h2 className="text-xl font-black text-white">
-                The 25 Prophets Mentioned in the Holy Qur'an (الأنبياء والرسل)
-              </h2>
-              <p className="text-xs text-slate-300 mt-1">
-                Belief in all Prophets and Messengers is an indispensable article of faith (Arkan al-Iman).
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-black text-white">
+                    Tajweed Rules & The 10 Mutawatir Qira'at (أحكام التجويد والقراءات)
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Tajweed ensures every letter is articulated with precision from its correct point of articulation (Makhraj) and intrinsic quality (Sifah).
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setIsVoiceModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-700/50 hover:bg-emerald-600 text-xs font-bold text-white border border-emerald-500/40 flex items-center gap-1.5 transition shrink-0"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Switch Riwayah Mode</span>
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {THE_25_PROPHETS.map((prophet, idx) => (
+            {/* Riwayat Comparison Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {ALL_RIWAYAT.map((riwayah) => (
                 <div
-                  key={idx}
-                  className="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-emerald-500/50 transition space-y-1.5"
+                  key={riwayah.id}
+                  className={`p-4 rounded-2xl border transition ${
+                    activeRiwayahId === riwayah.id
+                      ? 'bg-emerald-950/60 border-emerald-500 ring-1 ring-emerald-500/50'
+                      : 'bg-slate-800/80 border-slate-700'
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">{idx + 1}. {prophet.name}</span>
-                    <span className="font-['Amiri',serif] text-base font-bold text-emerald-300">
-                      {prophet.arabic}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-bold text-white">{riwayah.nameEnglish}</span>
+                    <span className="font-['Amiri',serif] text-base text-emerald-300 font-bold">
+                      {riwayah.nameArabic}
                     </span>
                   </div>
-                  <div className="text-[11px] font-semibold text-amber-300">{prophet.title}</div>
-                  <div className="text-[10px] text-slate-400">{prophet.period}</div>
-                  <button
-                    onClick={() =>
-                      onAskAITutor(
-                        `Tell me the complete story of Prophet ${prophet.name} (${prophet.arabic}) as mentioned in the Holy Quran, their people, trials, and lessons.`,
-                        `Story of Prophet ${prophet.name}`
-                      )
-                    }
-                    className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 pt-1"
-                  >
-                    <span>Read Quranic Story</span>
-                    <ArrowRight className="w-2.5 h-2.5" />
-                  </button>
+
+                  <div className="text-xs text-slate-300 space-y-1 mb-2">
+                    <div><strong>Qari & Rawi:</strong> {riwayah.readerEnglish} / {riwayah.rawiEnglish}</div>
+                    <div><strong>Regions:</strong> {riwayah.primaryRegions}</div>
+                  </div>
+
+                  <div className="text-[11px] text-amber-300 font-bold mb-1">Key Phonetic Nuances:</div>
+                  <ul className="space-y-1 text-[11px] text-slate-300">
+                    {riwayah.keyPhoneticRules.map((rule, idx) => (
+                      <li key={idx} className="flex items-start gap-1">
+                        <span className="text-emerald-400 font-bold">•</span>
+                        <span>{rule}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* ==================================================== */}
-        {/* TAB 5: TAJWEED RULES                                 */}
-        {/* ==================================================== */}
-        {activeTab === 'tajweed' && (
-          <div className="space-y-6">
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6">
-              <h2 className="text-xl font-black text-white">
-                Tajweed Rules for Accurate Qur'anic Recitation (أحكام التجويد)
-              </h2>
-              <p className="text-xs text-slate-300 mt-1">
-                Tajweed means to recite every letter from its correct point of articulation (Makhraj) with its intrinsic characteristics (Sifat).
-              </p>
-            </div>
+            {/* Tajweed Modules */}
+            <div className="space-y-6 pt-4">
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-emerald-400" />
+                <span>Fundamental Tajweed Rules</span>
+              </h3>
 
-            <div className="space-y-6">
               {TAJWEED_MODULES.map((module, idx) => (
                 <div key={idx} className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                    <h3 className="text-base font-bold text-white">{module.title}</h3>
+                    <h4 className="text-base font-bold text-white">{module.title}</h4>
                     <span className="font-['Amiri',serif] text-lg text-emerald-300">{module.arabic}</span>
                   </div>
 
@@ -1092,17 +1655,17 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
 
                   <div className="text-[10px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-700/50">
                     <span>Reference: {dua.reference}</span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${dua.title}\n${dua.arabic}\n${dua.translation}`);
-                        setCopiedKey(dua.id);
-                        setTimeout(() => setCopiedKey(null), 2000);
-                      }}
-                      className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-bold"
-                    >
-                      {copiedKey === dua.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      <span>Copy</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          handleCopyText(`${dua.title}\n${dua.arabic}\n${dua.translation}`, dua.id)
+                        }
+                        className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-bold"
+                      >
+                        {copiedKey === dua.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>Copy</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1271,7 +1834,6 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
               })}
             </div>
 
-            {/* Explanation card after answering */}
             {selectedAnswer !== null && (
               <div className="p-4 rounded-xl bg-slate-900 border border-slate-700 text-xs space-y-2">
                 <div className="font-bold text-emerald-300">Explanation:</div>
@@ -1302,6 +1864,21 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
           </div>
         )}
       </div>
+
+      {/* Riwayah and Reciter Voice Selection Modal */}
+      <RiwayahVoiceSelectorModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        activeRiwayahId={activeRiwayahId}
+        activeReciterId={activeReciterId}
+        onSelectRiwayah={handleSelectRiwayah}
+        onSelectReciter={handleSelectReciter}
+        applyToAllSubjects={applyToAllSubjects}
+        onToggleApplyToAllSubjects={handleToggleApplyAll}
+      />
+
+      {/* Persistent Global Audio Player Bar */}
+      <IslamicGlobalAudioPlayer onOpenVoiceModal={() => setIsVoiceModalOpen(true)} />
     </div>
   );
 }

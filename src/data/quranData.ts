@@ -561,16 +561,35 @@ export const SPECIAL_AYAHS = [
   },
 ];
 
-// Helper to get formatted Surah audio URL (Mishary Rashid Alafasy)
-export function getSurahAudioUrl(surahNumber: number): string {
+// Helper to get formatted Surah audio URL (Mishary Rashid Alafasy by default or custom reciter)
+export function getSurahAudioUrl(surahNumber: number, reciterId?: string): string {
   const padded = surahNumber.toString().padStart(3, '0');
+  if (reciterId === 'abdul_basit') return `https://server7.mp3quran.net/basit/${padded}.mp3`;
+  if (reciterId === 'al_husary_hafs') return `https://server13.mp3quran.net/husr/${padded}.mp3`;
+  if (reciterId === 'al_minshawi') return `https://server10.mp3quran.net/minsh/${padded}.mp3`;
+  if (reciterId === 'maher_al_muaiqly') return `https://server12.mp3quran.net/maher/${padded}.mp3`;
+  if (reciterId === 'saad_al_ghamdi') return `https://server7.mp3quran.net/s_gmd/${padded}.mp3`;
+  if (reciterId === 'yasser_al_dosari') return `https://server11.mp3quran.net/yasser/${padded}.mp3`;
+  if (reciterId === 'omar_al_qazabri') return `https://server9.mp3quran.net/omar_warsh/${padded}.mp3`;
+  if (reciterId === 'yasin_al_jazairi') return `https://server11.mp3quran.net/jazaeri/${padded}.mp3`;
+  if (reciterId === 'al_husary_warsh') return `https://server13.mp3quran.net/husr/warsh/${padded}.mp3`;
+  if (reciterId === 'al_dukali_al_alim') return `https://server7.mp3quran.net/dokali/${padded}.mp3`;
+  if (reciterId === 'al_fatih_zubair') return `https://server6.mp3quran.net/fateh/${padded}.mp3`;
+  if (reciterId === 'ali_al_huthaify') return `https://server9.mp3quran.net/hthfi/${padded}.mp3`;
   return `https://server8.mp3quran.net/afs/${padded}.mp3`;
 }
 
 // Helper to get individual Ayah audio URL (EveryAyah CDN)
-export function getAyahAudioUrl(surahNumber: number, ayahNumber: number): string {
+export function getAyahAudioUrl(surahNumber: number, ayahNumber: number, reciterId?: string): string {
   const s = surahNumber.toString().padStart(3, '0');
   const a = ayahNumber.toString().padStart(3, '0');
+  if (reciterId === 'abdul_basit') return `https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/${s}${a}.mp3`;
+  if (reciterId === 'al_husary_hafs' || reciterId === 'al_husary_warsh') return `https://everyayah.com/data/Husary_128kbps/${s}${a}.mp3`;
+  if (reciterId === 'al_minshawi') return `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`;
+  if (reciterId === 'maher_al_muaiqly') return `https://everyayah.com/data/MaherAlMuaiqly128kbps/${s}${a}.mp3`;
+  if (reciterId === 'saad_al_ghamdi') return `https://everyayah.com/data/Ghamadi_40kbps/${s}${a}.mp3`;
+  if (reciterId === 'yasser_al_dosari') return `https://everyayah.com/data/Yasser_Ad-Dussary_128kbps/${s}${a}.mp3`;
+  if (reciterId === 'ali_al_huthaify') return `https://everyayah.com/data/Hudaify_128kbps/${s}${a}.mp3`;
   return `https://everyayah.com/data/Alafasy_128kbps/${s}${a}.mp3`;
 }
 

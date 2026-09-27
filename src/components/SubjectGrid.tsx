@@ -284,14 +284,14 @@ export function SubjectGrid({
             <div className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
               <span>Al-Qur'an al-Kareem & Islamic Studies Hub</span>
               <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 rounded-md text-[10px] font-black">
-                114 Surahs + Audio Recitation + 40 Hadith + Salah Guide + Zakat
+                Choose Riwayah (Hafs, Warsh, Qalun, Duri) + Reciter Voices + Hadith Library + All Islamic Subjects
               </span>
             </div>
             <h4 className="text-sm sm:text-base font-black text-white mt-0.5 font-['Outfit',sans-serif]">
-              Read the Full Holy Qur'an with Translation, Audio & Islamic Sciences
+              Read & Listen with Chosen Riwayah & Voice across Holy Qur'an, Hadith & All Islamic Subjects
             </h4>
             <p className="text-xs text-emerald-200/80">
-              Uthmani script with Tashkeel, Sheikh Mishary Alafasy audio, 40 Hadiths of Imam An-Nawawi, illustrated prayer guide, daily duas, and Zakat calculator.
+              Multiple Riwayat (Hafs, Warsh, Qalun, Ad-Duri), 12+ world master voices, Hadith collections (An-Nawawi, Bukhari, Muslim, Riyad as-Salihin), Fiqh, Aqeedah, Seerah, Tajweed, and CBT prep.
             </p>
           </div>
         </div>
