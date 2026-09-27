@@ -317,7 +317,7 @@ export interface MathEquationSolution {
 
 export type MiniGameCategory = 'math' | 'science' | 'english' | 'code' | 'languages' | 'logic';
 
-export type AppView = 'home' | 'topics' | 'arcade' | 'subject' | 'lesson' | 'quiz' | 'ai-tutor' | 'dashboard' | 'leaderboard' | 'exam-prep';
+export type AppView = 'home' | 'topics' | 'arcade' | 'subject' | 'lesson' | 'quiz' | 'ai-tutor' | 'dashboard' | 'leaderboard' | 'exam-prep' | 'practicals' | 'quran';
 
 export type ExamTarget = 'waec' | 'jamb' | 'neco' | 'bece' | 'common-entrance' | 'sat-gcse' | 'class-termly' | 'universal';
 

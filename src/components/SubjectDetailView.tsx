@@ -10,7 +10,8 @@ import {
   Sparkles,
   Bot,
   Award,
-  Layers
+  Layers,
+  Moon,
 } from 'lucide-react';
 import { Subject, LevelDifficulty, UserProgress } from '../types';
 
@@ -21,6 +22,7 @@ interface SubjectDetailViewProps {
   onSelectLesson: (lessonId: string) => void;
   onStartQuiz: (lessonId: string) => void;
   onOpenAITutorWithContext: (subjectTitle: string) => void;
+  onOpenQuran?: () => void;
 }
 
 export function SubjectDetailView({
@@ -30,6 +32,7 @@ export function SubjectDetailView({
   onSelectLesson,
   onStartQuiz,
   onOpenAITutorWithContext,
+  onOpenQuran,
 }: SubjectDetailViewProps) {
   const [levelFilter, setLevelFilter] = useState<'all' | LevelDifficulty>('all');
 
@@ -106,6 +109,42 @@ export function SubjectDetailView({
           </div>
         </div>
       </div>
+
+      {/* Islamic Studies & Holy Quran Hub Quick Launch Banner */}
+      {subject.id === 'islamic-studies' && onOpenQuran && (
+        <div
+          onClick={onOpenQuran}
+          className="cursor-pointer p-5 rounded-3xl bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-950 border-2 border-emerald-500/50 hover:border-emerald-400 text-white shadow-md hover:shadow-lg transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-700/60 border border-emerald-400/40 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform">
+              <Moon className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 uppercase tracking-wider">
+                  Interactive Holy Qur'an & Deen Hub
+                </span>
+              </div>
+              <h3 className="text-base font-black text-white mt-1">
+                Open Full 114 Surahs Holy Qur'an Reader with Recitation & 40 Hadith
+              </h3>
+              <p className="text-xs text-emerald-200/80 mt-0.5">
+                Listen to Sheikh Mishary Rashid Alafasy, read verse-by-verse translations, practice Tajweed, learn step-by-step Salah & calculate Zakat.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenQuran();
+            }}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl transition shadow-sm whitespace-nowrap self-end sm:self-center"
+          >
+            Launch Quran Reader &rarr;
+          </button>
+        </div>
+      )}
 
       {/* Level Filters */}
       <div className="flex flex-wrap items-center justify-between gap-4">

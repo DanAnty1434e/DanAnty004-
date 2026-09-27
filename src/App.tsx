@@ -38,6 +38,8 @@ import { WelcomeAboutModal } from './components/WelcomeAboutModal';
 import { StudyAlarmModal } from './components/StudyAlarmModal';
 import { ActiveAlarmModal } from './components/ActiveAlarmModal';
 import { ExamTestPrepModal } from './components/ExamTestPrepModal';
+import { VirtualPracticalLab } from './components/VirtualPracticalLab';
+import { QuranReader } from './components/QuranReader';
 import {
   StudyAlarm,
   getSavedAlarms,
@@ -449,6 +451,7 @@ export default function App() {
             onOpenAboutModal={() => setIsWelcomeOpen(true)}
             onOpenAlarmModal={() => setIsAlarmModalOpen(true)}
             onOpenExamPrep={() => setIsExamModalOpen(true)}
+            onOpenQuran={() => setActiveView('quran')}
           />
         )}
 
@@ -506,6 +509,7 @@ export default function App() {
             onOpenAITutorWithContext={(subjectTitle) =>
               handleAskAIWithContext(`Can you introduce me to the core concepts of ${subjectTitle}?`, subjectTitle)
             }
+            onOpenQuran={() => setActiveView('quran')}
           />
         )}
 
@@ -581,6 +585,24 @@ export default function App() {
               onSelectLesson={handleSelectLesson}
             />
           </div>
+        )}
+
+        {/* VIEW 10: Virtual Practical Lab with Image Diagrams */}
+        {activeView === 'practicals' && (
+          <VirtualPracticalLab
+            onClose={() => setActiveView('home')}
+            onAskAITutor={(prompt, contextTitle) => handleAskAIWithContext(prompt, contextTitle)}
+            onEarnXp={(amount) => showXpToast(amount)}
+          />
+        )}
+
+        {/* VIEW 11: Holy Quran Reader & All Islamic Studies Hub */}
+        {activeView === 'quran' && (
+          <QuranReader
+            onClose={() => setActiveView('home')}
+            onAskAITutor={(prompt, contextTitle) => handleAskAIWithContext(prompt, contextTitle)}
+            onEarnXp={(amount) => showXpToast(amount)}
+          />
         )}
       </main>
 
@@ -703,6 +725,7 @@ export default function App() {
 
           <div className="flex items-center space-x-4">
             <button onClick={() => setActiveView('home')} className="hover:text-slate-900 transition">Subjects</button>
+            <button onClick={() => setActiveView('quran')} className="hover:text-emerald-700 font-bold text-emerald-800 transition">Holy Qur'an & Deen</button>
             <button onClick={() => setActiveView('topics')} className="hover:text-slate-900 transition">Topics (+20 🪙)</button>
             <button onClick={() => setActiveView('arcade')} className="hover:text-slate-900 transition">Arcade (15 Games)</button>
             <button onClick={() => setActiveView('ai-tutor')} className="hover:text-slate-900 transition">AI Tutor</button>

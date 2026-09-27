@@ -37,6 +37,7 @@ import {
   Sun,
   BookMarked,
   Users,
+  Moon,
 } from 'lucide-react';
 import { Subject, SubjectId, UserProgress, CLASS_LEVELS } from '../types';
 import { CURRICULUM_DATA } from '../data/curriculum';
@@ -53,6 +54,7 @@ interface SubjectGridProps {
   onOpenAboutModal?: () => void;
   onOpenAlarmModal?: () => void;
   onOpenExamPrep?: () => void;
+  onOpenQuran?: () => void;
 }
 
 const ICONS_MAP: Record<string, React.ReactNode> = {
@@ -79,6 +81,7 @@ const ICONS_MAP: Record<string, React.ReactNode> = {
   BookMarked: <BookMarked className="w-6 h-6" />,
   Users: <Users className="w-6 h-6" />,
   GraduationCap: <GraduationCap className="w-6 h-6" />,
+  Moon: <Moon className="w-6 h-6" />,
 };
 
 export function SubjectGrid({
@@ -93,6 +96,7 @@ export function SubjectGrid({
   onOpenAboutModal,
   onOpenAlarmModal,
   onOpenExamPrep,
+  onOpenQuran,
 }: SubjectGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'science' | 'art' | 'commercial' | 'primary' | 'languages'>('all');
 
@@ -264,6 +268,38 @@ export function SubjectGrid({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Holy Quran & Islamic Studies Quick Hub Banner */}
+      <div
+        onClick={onOpenQuran}
+        className="cursor-pointer bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-950 p-5 rounded-3xl border-2 border-emerald-500/40 hover:border-emerald-400 shadow-md hover:shadow-lg transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group text-white"
+      >
+        <div className="flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-700/60 border border-emerald-400/40 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform shadow-sm shrink-0">
+            <Moon className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
+              <span>Al-Qur'an al-Kareem & Islamic Studies Hub</span>
+              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 rounded-md text-[10px] font-black">
+                114 Surahs + Audio Recitation + 40 Hadith + Salah Guide + Zakat
+              </span>
+            </div>
+            <h4 className="text-sm sm:text-base font-black text-white mt-0.5 font-['Outfit',sans-serif]">
+              Read the Full Holy Qur'an with Translation, Audio & Islamic Sciences
+            </h4>
+            <p className="text-xs text-emerald-200/80">
+              Uthmani script with Tashkeel, Sheikh Mishary Alafasy audio, 40 Hadiths of Imam An-Nawawi, illustrated prayer guide, daily duas, and Zakat calculator.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+          <span className="text-xs font-bold text-emerald-300 group-hover:text-white transition-colors">
+            Read Qur'an & Islam &rarr;
+          </span>
+          <ArrowRight className="w-5 h-5 text-emerald-300 group-hover:text-white group-hover:translate-x-1 transition-all" />
         </div>
       </div>
 

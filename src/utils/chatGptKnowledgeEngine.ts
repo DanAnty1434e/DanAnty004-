@@ -10,6 +10,8 @@ export interface KnowledgeEntry {
   markdown: string;
 }
 
+import { PRACTICALS_KNOWLEDGE } from '../data/practicalsKnowledge';
+
 export const KNOWLEDGE_CATALOG: KnowledgeEntry[] = [
   // --- English & Literature ---
   {
@@ -375,8 +377,9 @@ export function getChatGptStandardAnswer(question: string, subject?: string): st
     return mathResult;
   }
 
-  // 2. Exact or fuzzy match in knowledge catalog
-  for (const entry of KNOWLEDGE_CATALOG) {
+  // 2. Exact or fuzzy match in knowledge catalog & practicals catalog
+  const fullCatalog = [...PRACTICALS_KNOWLEDGE, ...KNOWLEDGE_CATALOG];
+  for (const entry of fullCatalog) {
     for (const keyword of entry.keywords) {
       if (qLower.includes(keyword)) {
         return entry.markdown;

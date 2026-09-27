@@ -23,6 +23,8 @@ import {
   School,
   Info,
   AlarmClock,
+  FlaskConical,
+  Moon,
 } from 'lucide-react';
 import { UserProgress, SubjectId, NetworkStatus, AppView, CLASS_LEVELS } from '../types';
 import { CURRICULUM_DATA } from '../data/curriculum';
@@ -177,6 +179,46 @@ export function Navbar({
                   </span>
                 </button>
               )}
+
+              {/* Virtual Practical Lab Button */}
+              <button
+                id="nav-practical-lab-btn"
+                onClick={() => onNavigate('practicals')}
+                className={`px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
+                  activeView === 'practicals'
+                    ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
+                    : 'text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 border-indigo-200/80 bg-indigo-50/50'
+                }`}
+                title="Hands-on Virtual Science Practicals with Illustrated Image Diagrams"
+              >
+                <FlaskConical className={`w-3.5 h-3.5 ${activeView === 'practicals' ? 'text-white' : 'text-indigo-600'}`} />
+                <span>Practical Lab</span>
+                <span className={`px-1 py-0.2 text-[8px] font-black rounded ${
+                  activeView === 'practicals' ? 'bg-indigo-900 text-indigo-100' : 'bg-indigo-600 text-white'
+                }`}>
+                  Diagrams
+                </span>
+              </button>
+
+              {/* Holy Quran & Islamic Studies Hub Button */}
+              <button
+                id="nav-quran-reader-btn"
+                onClick={() => onNavigate('quran')}
+                className={`px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
+                  activeView === 'quran'
+                    ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
+                    : 'text-emerald-800 hover:text-emerald-950 hover:bg-emerald-50 border-emerald-300/80 bg-emerald-50/70'
+                }`}
+                title="Read Holy Qur'an with Translation, Audio Recitation & All Islamic Studies"
+              >
+                <Moon className={`w-3.5 h-3.5 ${activeView === 'quran' ? 'text-white' : 'text-emerald-600'}`} />
+                <span>Qur'an & Deen</span>
+                <span className={`px-1 py-0.2 text-[8px] font-black rounded ${
+                  activeView === 'quran' ? 'bg-emerald-900 text-emerald-100' : 'bg-emerald-700 text-white'
+                }`}>
+                  114 Surahs
+                </span>
+              </button>
 
               {/* Instant Math Solver Quick Button */}
               <button
