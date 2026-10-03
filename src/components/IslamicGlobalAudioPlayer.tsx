@@ -92,9 +92,19 @@ export function IslamicGlobalAudioPlayer({ onOpenVoiceModal }: IslamicGlobalAudi
               <span className="font-bold text-xs sm:text-sm text-white truncate">
                 {track.title}
               </span>
+              {audioState.qiraah && (
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-950 border border-teal-700 text-teal-300 shrink-0">
+                  {audioState.qiraah.nameEnglish.replace("Qira'at ", '')}
+                </span>
+              )}
               {audioState.riwayah && (
-                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 border border-emerald-700 text-emerald-300 shrink-0">
+                <span className="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 border border-emerald-700 text-emerald-300 shrink-0">
                   {audioState.riwayah.nameArabic}
+                </span>
+              )}
+              {audioState.reciter?.isUserRecording && (
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-950 border border-rose-600 text-rose-300 shrink-0">
+                  🎙️ My Voice
                 </span>
               )}
             </div>

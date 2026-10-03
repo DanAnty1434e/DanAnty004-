@@ -1,4 +1,14 @@
-import { RiwayahId, getRiwayahById, getReciterById } from '../data/riwayahAndVoices';
+import {
+  RiwayahId,
+  QiraahId,
+  getRiwayahById,
+  getReciterById,
+  getQiraahById,
+  getQiraahForRiwayah,
+  QiraahMeta,
+  RiwayahMeta,
+  ReciterVoiceMeta,
+} from '../data/riwayahAndVoices';
 
 export interface AudioTrackInfo {
   id: string;
@@ -8,6 +18,7 @@ export interface AudioTrackInfo {
   arabicText?: string;
   englishText?: string;
   riwayahId: RiwayahId;
+  qiraahId?: QiraahId;
   reciterId: string;
   audioUrl?: string;
   surahNumber?: number;
@@ -81,6 +92,11 @@ class IslamicAudioEngine {
 
   public getState(): AudioEngineState {
     const riwayah = this.currentTrack ? getRiwayahById(this.currentTrack.riwayahId) : null;
+    const qiraah = this.currentTrack
+      ? this.currentTrack.qiraahId
+        ? getQiraahById(this.currentTrack.qiraahId)
+        : getQiraahForRiwayah(this.currentTrack.riwayahId)
+      : null;
     const reciter = this.currentTrack ? getReciterById(this.currentTrack.reciterId) : null;
 
     return {
@@ -90,6 +106,7 @@ class IslamicAudioEngine {
       currentTime: this.currentTime,
       duration: this.duration,
       riwayah,
+      qiraah,
       reciter,
     };
   }
@@ -270,6 +287,7 @@ export interface AudioEngineState {
   currentTime: number;
   duration: number;
   riwayah: ReturnType<typeof getRiwayahById> | null;
+  qiraah: ReturnType<typeof getQiraahById> | null;
   reciter: ReturnType<typeof getReciterById> | null;
 }
 

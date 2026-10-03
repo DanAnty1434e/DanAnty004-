@@ -284,14 +284,14 @@ export function SubjectGrid({
             <div className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
               <span>Al-Qur'an al-Kareem & Islamic Studies Hub</span>
               <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 rounded-md text-[10px] font-black">
-                Choose Riwayah (Hafs, Warsh, Qalun, Duri) + Reciter Voices + Hadith Library + All Islamic Subjects
+                10 Qira'at + 20 Riwayat + Search Qira'ah + Record Your Voice Studio + Hadith Library
               </span>
             </div>
             <h4 className="text-sm sm:text-base font-black text-white mt-0.5 font-['Outfit',sans-serif]">
-              Read & Listen with Chosen Riwayah & Voice across Holy Qur'an, Hadith & All Islamic Subjects
+              Apply All 10 Qira'at & 20 Riwayat, Search Readings & Record Your Voice across Qur'an & Islam
             </h4>
             <p className="text-xs text-emerald-200/80">
-              Multiple Riwayat (Hafs, Warsh, Qalun, Ad-Duri), 12+ world master voices, Hadith collections (An-Nawawi, Bukhari, Muslim, Riyad as-Salihin), Fiqh, Aqeedah, Seerah, Tajweed, and CBT prep.
+              Explore Nafi' (Warsh & Qalun), 'Asim (Hafs & Shu'bah), Abu 'Amr (Duri & Sousi), Hamzah (Khalaf & Khallad), Ibn Kathir, Ibn 'Amir, Al-Kisa'i, Abu Ja'far, Ya'qub, Khalaf al-'Ashir. Record your own recitation and apply it!
             </p>
           </div>
         </div>

@@ -209,14 +209,14 @@ export function Navbar({
                     ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
                     : 'text-emerald-800 hover:text-emerald-950 hover:bg-emerald-50 border-emerald-300/80 bg-emerald-50/70'
                 }`}
-                title="Read & Listen with Chosen Riwayah (Hafs, Warsh, Qalun, Duri) & Voices Across Qur'an, Hadith & All Islamic Subjects"
+                title="Read, Search & Listen to the 10 Mutawatir Qira'at, 20 Riwayat, Record Your Voice, Hadith & All Islamic Subjects"
               >
                 <Moon className={`w-3.5 h-3.5 ${activeView === 'quran' ? 'text-white' : 'text-emerald-600'}`} />
                 <span>Qur'an & Deen</span>
                 <span className={`px-1 py-0.2 text-[8px] font-black rounded ${
                   activeView === 'quran' ? 'bg-emerald-900 text-emerald-100' : 'bg-emerald-700 text-white'
                 }`}>
-                  Riwayat & Audio
+                  10 Qira'at & Studio
                 </span>
               </button>
 

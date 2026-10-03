@@ -1,3 +1,5 @@
+import { getReciterById as getReciterVoiceMeta } from './riwayahAndVoices';
+
 export interface SurahMeta {
   number: number;
   name: string; // Arabic name e.g. الفاتحة
@@ -563,6 +565,16 @@ export const SPECIAL_AYAHS = [
 
 // Helper to get formatted Surah audio URL (Mishary Rashid Alafasy by default or custom reciter)
 export function getSurahAudioUrl(surahNumber: number, reciterId?: string): string {
+  if (reciterId) {
+    try {
+      const reciter = getReciterVoiceMeta(reciterId);
+      if (reciter && reciter.audioServerSurah) {
+        const url = reciter.audioServerSurah(surahNumber);
+        if (url) return url;
+      }
+    } catch {}
+  }
+
   const padded = surahNumber.toString().padStart(3, '0');
   if (reciterId === 'abdul_basit') return `https://server7.mp3quran.net/basit/${padded}.mp3`;
   if (reciterId === 'al_husary_hafs') return `https://server13.mp3quran.net/husr/${padded}.mp3`;
@@ -581,6 +593,16 @@ export function getSurahAudioUrl(surahNumber: number, reciterId?: string): strin
 
 // Helper to get individual Ayah audio URL (EveryAyah CDN)
 export function getAyahAudioUrl(surahNumber: number, ayahNumber: number, reciterId?: string): string {
+  if (reciterId) {
+    try {
+      const reciter = getReciterVoiceMeta(reciterId);
+      if (reciter && reciter.audioServerAyah) {
+        const url = reciter.audioServerAyah(surahNumber, ayahNumber);
+        if (url) return url;
+      }
+    } catch {}
+  }
+
   const s = surahNumber.toString().padStart(3, '0');
   const a = ayahNumber.toString().padStart(3, '0');
   if (reciterId === 'abdul_basit') return `https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/${s}${a}.mp3`;
