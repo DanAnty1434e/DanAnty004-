@@ -33,6 +33,8 @@ import {
   Headphones,
   BookCheck,
   Mic,
+  Video,
+  Camera,
   X,
 } from 'lucide-react';
 import {
@@ -87,6 +89,7 @@ import {
 import { RiwayahVoiceSelectorModal } from './RiwayahVoiceSelectorModal';
 import { QiraahStudioRecorderModal } from './QiraahStudioRecorderModal';
 import { IslamicGlobalAudioPlayer } from './IslamicGlobalAudioPlayer';
+import { ReciterVideoScannerModal } from './ReciterVideoScannerModal';
 
 interface QuranReaderProps {
   onClose: () => void;
@@ -147,6 +150,8 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
 
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
   const [isRecordStudioOpen, setIsRecordStudioOpen] = useState<boolean>(false);
+  const [isVideoScannerOpen, setIsVideoScannerOpen] = useState<boolean>(false);
+  const [qiraahQuickSearch, setQiraahQuickSearch] = useState<string>('');
 
   // Qira'at Explorer Tab Search & Filter State
   const [qiraahExplorerSearch, setQiraahExplorerSearch] = useState<string>('');
@@ -494,10 +499,20 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* AI Video Reciter Scanner Button */}
+            <button
+              onClick={() => setIsVideoScannerOpen(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white border border-teal-400/50 flex items-center gap-1.5 transition shadow-sm"
+              title="Record or Upload Video to Tell You the Reciter & Qira'ah"
+            >
+              <Video className="w-3.5 h-3.5 text-white" />
+              <span>Video Reciter Scanner</span>
+            </button>
+
             {/* Direct Studio Recording Button */}
             <button
               onClick={() => setIsRecordStudioOpen(true)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600/80 hover:bg-rose-500 text-white border border-rose-400/50 flex items-center gap-1.5 transition shadow-sm animate-pulse"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600/80 hover:bg-rose-500 text-white border border-rose-400/50 flex items-center gap-1.5 transition shadow-sm"
               title="Record Your Own Recitation in Any Qira'ah"
             >
               <Mic className="w-3.5 h-3.5 text-white" />
@@ -555,6 +570,24 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>Holy Qur'an Reader (المصحف)</span>
+          </button>
+
+          {/* Video Reciter Scanner Quick Tab */}
+          <button
+            onClick={() => setIsVideoScannerOpen(true)}
+            className="px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap bg-teal-950/70 hover:bg-teal-900 border border-teal-700/60 text-teal-200 transition shadow-sm"
+          >
+            <Video className="w-3.5 h-3.5 text-teal-400" />
+            <span>Video Reciter Scanner (مسح فيديو وتحديد القارئ)</span>
+          </button>
+
+          {/* All Reciters Directory Tab */}
+          <button
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap bg-slate-850 hover:bg-slate-800 border border-slate-700/80 text-amber-300 transition shadow-sm"
+          >
+            <Globe className="w-3.5 h-3.5 text-amber-400" />
+            <span>All Reciters ({ALL_RECITERS.length})</span>
           </button>
 
           <button
@@ -669,7 +702,146 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
         {/* TAB 1: HOLY QURAN READER                             */}
         {/* ==================================================== */}
         {activeTab === 'quran' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="space-y-6">
+            {/* Interactive 10 Canonical Qira'at Access & Search Toolbar */}
+            <div className="bg-gradient-to-r from-slate-900 via-emerald-950/70 to-slate-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl space-y-3">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-sm shadow-md shadow-emerald-500/20">
+                    10
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>The 10 Mutawatir Qira'at & 20 Riwayat</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Active: {currentQiraah.nameEnglish.replace("Qira'at ", '')} ({currentRiwayah.nameArabic})
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      Access and search any canonical Qira'ah or Riwayah • Click any Qira'ah to switch recitation audio instantly
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+                  {/* Quick Search Qira'at Bar */}
+                  <div className="relative flex-1 sm:w-64 min-w-[200px]">
+                    <Search className="w-3.5 h-3.5 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={qiraahQuickSearch}
+                      onChange={(e) => setQiraahQuickSearch(e.target.value)}
+                      placeholder="Search Qira'a (e.g. Warsh, Nafi', Duri, Sousi, Hamzah)..."
+                      className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                    {qiraahQuickSearch && (
+                      <button
+                        onClick={() => setQiraahQuickSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Video Scanner Button */}
+                  <button
+                    onClick={() => setIsVideoScannerOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition shrink-0"
+                    title="Record or Upload Video to Tell Reciter"
+                  >
+                    <Video className="w-3.5 h-3.5 text-white" />
+                    <span className="hidden sm:inline">Record Video & Tell Reciter</span>
+                    <span className="sm:hidden">Video Scan</span>
+                  </button>
+
+                  {/* All Reciters Directory */}
+                  <button
+                    onClick={() => setIsVoiceModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition shrink-0"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-amber-400" />
+                    <span>All Reciters ({ALL_RECITERS.length})</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 10 Qira'at Quick Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold scrollbar-thin scrollbar-thumb-slate-800">
+                {ALL_QIRAAT.filter((q) => {
+                  const qLower = qiraahQuickSearch.toLowerCase().trim();
+                  if (!qLower) return true;
+                  const riwayat = ALL_RIWAYAT.filter((r) => q.riwayatIds.includes(r.id));
+                  return (
+                    q.nameEnglish.toLowerCase().includes(qLower) ||
+                    q.nameArabic.toLowerCase().includes(qLower) ||
+                    q.imamEnglish.toLowerCase().includes(qLower) ||
+                    q.city.toLowerCase().includes(qLower) ||
+                    riwayat.some((r) => r.nameEnglish.toLowerCase().includes(qLower) || r.nameArabic.toLowerCase().includes(qLower))
+                  );
+                }).map((qiraah) => {
+                  const isSelected = activeQiraahId === qiraah.id;
+                  return (
+                    <button
+                      key={qiraah.id}
+                      onClick={() => {
+                        handleSelectQiraah(qiraah.id);
+                        const firstRiwayah = qiraah.riwayatIds[0];
+                        if (firstRiwayah) handleSelectRiwayah(firstRiwayah);
+                        const matchingReciter = ALL_RECITERS.find((r) => r.riwayahId === firstRiwayah);
+                        if (matchingReciter) handleSelectReciter(matchingReciter.id);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl whitespace-nowrap border transition flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white border-emerald-400 shadow-md ring-1 ring-emerald-400/50'
+                          : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-emerald-600/60 hover:text-white'
+                      }`}
+                    >
+                      <span className="w-4 h-4 rounded-full bg-black/40 text-[10px] font-black flex items-center justify-center">
+                        {qiraah.canonicalOrder}
+                      </span>
+                      <span>{qiraah.nameEnglish.replace("Qira'at ", '')}</span>
+                      <span className="text-[10px] opacity-75 font-normal">({qiraah.city.split(',')[0]})</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Sub-bar: 2 Canonical Riwayat of the Selected Qira'ah */}
+              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-slate-400 text-[11px] font-semibold">
+                    The 2 Riwayat of {currentQiraah.nameEnglish.replace("Qira'at ", '')}:
+                  </span>
+                  {ALL_RIWAYAT.filter((r) => currentQiraah.riwayatIds.includes(r.id)).map((r) => {
+                    const isRiwayahActive = activeRiwayahId === r.id;
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => {
+                          handleSelectRiwayah(r.id);
+                          const matchingReciter = ALL_RECITERS.find((rec) => rec.riwayahId === r.id);
+                          if (matchingReciter) handleSelectReciter(matchingReciter.id);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition ${
+                          isRiwayahActive
+                            ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
+                            : 'bg-slate-800 text-emerald-300 border-slate-700 hover:border-emerald-500'
+                        }`}
+                      >
+                        {r.nameEnglish} ({r.nameArabic})
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="text-[11px] text-slate-400">
+                  Current Reciter Voice: <span className="text-amber-300 font-bold">{currentReciter.nameEnglish}</span> {currentReciter.countryFlag}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Sidebar: Surah Selector & Browser */}
             <div className="lg:col-span-4 space-y-4">
               <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow-sm backdrop-blur">
@@ -1057,7 +1229,8 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* ==================================================== */}
         {/* TAB 2: HADITH LIBRARY & VOICE LISTENING              */}
@@ -2251,6 +2424,18 @@ export function QuranReader({ onClose, onAskAITutor, onEarnXp }: QuranReaderProp
         applyToAllSubjects={applyToAllSubjects}
         onToggleApplyToAllSubjects={handleToggleApplyAll}
         onOpenRecordStudio={() => setIsRecordStudioOpen(true)}
+        onOpenVideoScanner={() => setIsVideoScannerOpen(true)}
+      />
+
+      {/* AI Multimodal Reciter Video Scanner Modal */}
+      <ReciterVideoScannerModal
+        isOpen={isVideoScannerOpen}
+        onClose={() => setIsVideoScannerOpen(false)}
+        onApplyReciter={(recId, riwayahId, qiraahId) => {
+          handleSelectReciter(recId);
+          if (riwayahId) handleSelectRiwayah(riwayahId);
+          if (qiraahId) handleSelectQiraah(qiraahId);
+        }}
       />
 
       {/* In-Browser Qira'ah Voice Recording Studio Modal */}

@@ -847,8 +847,348 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
       return `https://everyayah.com/data/Hudaify_128kbps/${s}${a}.mp3`;
     },
   },
+  {
+    id: 'sudais',
+    nameArabic: 'الشيخ عَبْد الرَّحْمَن السُّدَيْس',
+    nameEnglish: 'Sheikh Abdul Rahman Al-Sudais',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Melodic Khushu',
+    bio: 'General President of the Affairs of the Two Holy Mosques and Imam of the Grand Mosque in Makkah for over 4 decades. Known worldwide for his iconic, soaring emotional voice in Taraweeh and Dua.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/sds/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'shuraim',
+    nameArabic: 'الشيخ د. سُعُود الشُّرَيْم',
+    nameEnglish: 'Sheikh Dr. Saud Al-Shuraim',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Murattal',
+    bio: 'Former Imam and Khatib of the Grand Mosque (Masjid al-Haram) in Makkah and Professor of Islamic Jurisprudence. Renowned for rapid, rhythmic, and commanding delivery.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server7.mp3quran.net/shrm/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Saood_ash-Shuraym_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'ali_jaber',
+    nameArabic: 'الشيخ عَلِي عَبْد الله جَابِر',
+    nameEnglish: 'Sheikh Ali Abdullah Jaber',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Melodic Khushu',
+    bio: 'Legendary Imam of the Grand Mosque in Makkah in the 1980s. Celebrated for unmatched vocal sweetness, effortless breath control, and deeply moving Bayati and Hijaz maqamat.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/a_jbr/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Ali_Jaber_64kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'muhammad_ayyub',
+    nameArabic: 'الشيخ مُحَمَّد أَيُّوب',
+    nameEnglish: 'Sheikh Muhammad Ayyub',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Melodic Khushu',
+    bio: 'Beloved late Imam of the Prophet\'s Mosque in Madinah. Master of the Hijazi melody with sublime reverent pacing that defined Quranic recitation across the Islamic world.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server8.mp3quran.net/ayyub/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Muhammad_Ayyoob_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'shatri',
+    nameArabic: 'الشيخ أَبُو بَكْر الشَّاطِرِي',
+    nameEnglish: 'Sheikh Abu Bakr Al-Shatri',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia / Yemen',
+    countryFlag: '🇸🇦',
+    style: 'Melodic Khushu',
+    bio: 'Renowned Saudi Qari of Yemeni heritage. Distinguished by a uniquely gentle, resonant acoustic style characterized by tranquil pacing and soothing contemplation.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/shatr/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Abu_Bakr_Ash-Shaatree_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'basfar',
+    nameArabic: 'الشيخ د. عَبْد الله بَصْفَر',
+    nameEnglish: 'Sheikh Dr. Abdullah Basfar',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Educational',
+    bio: 'Prominent international Quran scholar, President of the Holy Quran Memorization International Organization. Famous for clear, pedagogically structured Tajweed.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server6.mp3quran.net/bsfr/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Abdullah_Basfar_192kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'bukhatir',
+    nameArabic: 'الشيخ صَلَاح بُوخَاطِر',
+    nameEnglish: 'Sheikh Salah Bukhatir',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'United Arab Emirates',
+    countryFlag: '🇦🇪',
+    style: 'Melodic Khushu',
+    bio: 'Acclaimed Emirati reciter whose tone closely echoes the majestic serenity of Sheikh Abdul Rahman Al-Sudais, admired for emotional warmth and clarity.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server8.mp3quran.net/bu_khtr/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Salah_Al_Budair_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'qatami',
+    nameArabic: 'الشيخ نَاصِر القَطَامِي',
+    nameEnglish: 'Sheikh Nasser Al-Qatami',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Melodic Khushu',
+    bio: 'Imam of the Princess Latifa Bint Sultan Mosque in Riyadh. One of the most popular contemporary reciters whose deeply emotional Taraweeh prayers draw tens of thousands.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server6.mp3quran.net/qtm/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Nasser_Alqatami_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'ajmy',
+    nameArabic: 'الشيخ أَحْمَد بن عَلِي العَجْمِي',
+    nameEnglish: 'Sheikh Ahmed Ali Al-Ajmi',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Murattal',
+    bio: 'Iconic Saudi reciter from Khobar, celebrated internationally for his vibrant, energized, and deeply resonant vocal tone with impeccable Tajweed.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server10.mp3quran.net/ajm/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Ahmed_ibn_Ali_al-Ajamy_128kbps_QuranExplorer.Com/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'budair',
+    nameArabic: 'الشيخ صَلَاح البُدَيْر',
+    nameEnglish: 'Sheikh Salah Al-Budair',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Murattal',
+    bio: 'Senior Judge and Imam of the Prophet\'s Mosque in Madinah. Noted for his tranquil, dignified, and classically pure articulation.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server6.mp3quran.net/bdr/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Salah_Al_Budair_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'baleela',
+    nameArabic: 'الشيخ بَنْدَر بَلِيلَة',
+    nameEnglish: 'Sheikh Bandar Baleela',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Murattal',
+    bio: 'Imam and Khatib of the Grand Mosque in Makkah, Member of the Council of Senior Scholars. Known for serene Hijazi maqamat and effortless melodic transitions.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server6.mp3quran.net/balilah/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'idris_abkar',
+    nameArabic: 'الشيخ إِدْرِيس أَبْكَر',
+    nameEnglish: 'Sheikh Idris Abkar',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Yemen / UAE',
+    countryFlag: '🇾🇪',
+    style: 'Melodic Khushu',
+    bio: 'Celebrated for heartbreaking emotional depth and weeping recitations, particularly in Surah Maryam, Yusuf, and Qiyam prayers.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server6.mp3quran.net/abkr/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'wadih_al_yamani',
+    nameArabic: 'الشيخ وَدِيع اليَمَنِي',
+    nameEnglish: 'Sheikh Wadih Al-Yamani',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Yemen / Kuwait',
+    countryFlag: '🇾🇪',
+    style: 'Melodic Khushu',
+    bio: 'Acclaimed Yemeni reciter with an exceptionally soothing, gentle voice that brings profound tranquility and introspection.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server6.mp3quran.net/wdh/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'mustafa_ismail',
+    nameArabic: 'الشيخ مُصْطَفَى إِسْمَاعِيل',
+    nameEnglish: 'Sheikh Mustafa Ismail',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Egypt',
+    countryFlag: '🇪🇬',
+    style: 'Mujawwad',
+    bio: 'Revered universally as "The King of Maqamat". Former official Qari of Al-Azhar and King Farouk. His musical genius and ability to interpret Quranic meanings through tonal shifts remain unmatched.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server8.mp3quran.net/mustafa/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Mustafa_Ismail_192kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'banna',
+    nameArabic: 'الشيخ مَحْمُود عَلِي البَنَّا',
+    nameEnglish: 'Sheikh Mahmoud Ali Al-Banna',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Egypt',
+    countryFlag: '🇪🇬',
+    style: 'Murattal',
+    bio: 'One of the legendary pillars of Egyptian radio recitation. Distinguished by flawless classical voice projection, noble posture, and serene gravity.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server8.mp3quran.net/bna/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Banna_32kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'tablawi',
+    nameArabic: 'الشيخ مُحَمَّد مَحْمُود الطَّبْلَاوِي',
+    nameEnglish: 'Sheikh Mohamed Mahmoud Al-Tablawi',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Egypt',
+    countryFlag: '🇪🇬',
+    style: 'Mujawwad',
+    bio: 'Former Sheikh of Egyptian Reciters and President of the Quran Reciters Syndicate. Famous for his robust, soaring vocal elasticity and classical mastery.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server12.mp3quran.net/tblwi/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'jibril',
+    nameArabic: 'الشيخ مُحَمَّد جِبْرِيل',
+    nameEnglish: 'Sheikh Muhammad Jibril',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Egypt',
+    countryFlag: '🇪🇬',
+    style: 'Melodic Khushu',
+    bio: 'Renowned Egyptian Qari famous for leading the Laylat al-Qadr prayers at Amr ibn al-Aas Mosque in Cairo, drawing over a million worshipers.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server8.mp3quran.net/jbrl/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Muhammad_Jibreel_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
+    id: 'rifai',
+    nameArabic: 'الشيخ هَانِي الرِّفَاعِي',
+    nameEnglish: 'Sheikh Hani Ar-Rifai',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Melodic Khushu',
+    bio: 'Imam of the Anani Mosque in Jeddah, loved across the Islamic world for heartfelt weeping recitations that evoke profound spiritual awe.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/rifai/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Hani_Rifai_192kbps/${s}${a}.mp3`;
+    },
+  },
 
-  // Warsh Reciters
+  // Warsh Reciters (North & West Africa)
   {
     id: 'omar_al_qazabri',
     nameArabic: 'الشيخ عُمَر القَزَابْرِي (وَرْش)',
@@ -862,6 +1202,21 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
     audioServerSurah: (surahNum: number) => {
       const padded = surahNum.toString().padStart(3, '0');
       return `https://server9.mp3quran.net/omar_warsh/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'kouchi_warsh',
+    nameArabic: 'الشيخ العُيُون الكُوشِي (وَرْش)',
+    nameEnglish: 'Sheikh El-Ayoun El-Kouchi (Warsh)',
+    riwayahId: 'warsh',
+    qiraahId: 'nafi',
+    country: 'Morocco',
+    countryFlag: '🇲🇦',
+    style: 'Melodic Khushu',
+    bio: 'Imam of the Andalus Mosque in Casablanca. Famous for exquisite Maghrebi Andalusian vocal intonation and emotional delivery in Warsh an Nafi.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/kouchi/${padded}.mp3`;
     },
   },
   {
@@ -892,6 +1247,21 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
     audioServerSurah: (surahNum: number) => {
       const padded = surahNum.toString().padStart(3, '0');
       return `https://server13.mp3quran.net/husr/warsh/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'abdul_basit_warsh',
+    nameArabic: 'الشيخ عَبْد البَاسِط عَبْد الصَّمَد (وَرْش)',
+    nameEnglish: 'Sheikh Abdul Basit (Warsh)',
+    riwayahId: 'warsh',
+    qiraahId: 'nafi',
+    country: 'Egypt',
+    countryFlag: '🇪🇬',
+    style: 'Murattal',
+    bio: 'The legendary Egyptian Golden Voice in his historic complete recitation of Warsh an Nafi, combining Egyptian resonance with North African Riwayah.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server7.mp3quran.net/basit/warsh/${padded}.mp3`;
     },
   },
 
@@ -927,7 +1297,22 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
     },
   },
 
-  // Ad-Duri Reciters
+  // Ad-Duri Reciters (Sudan, Somalia, East & West Africa)
+  {
+    id: 'nourin_siddiq',
+    nameArabic: 'الشيخ نُورِين مُحَمَّد صِدِّيق (الدُّورِي)',
+    nameEnglish: 'Sheikh Nourin Mohamed Siddiq (Ad-Duri)',
+    riwayahId: 'duri',
+    qiraahId: 'abu_amr',
+    country: 'Sudan',
+    countryFlag: '🇸🇩',
+    style: 'Melodic Khushu',
+    bio: 'Legendary Sudanese reciter whose deep soulful pentatonic Sahelian scale and heartbreaking sincerity captivated millions around the globe in Riwayah Ad-Duri an Abi Amr.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/nourin/${padded}.mp3`;
+    },
+  },
   {
     id: 'al_fatih_zubair',
     nameArabic: 'الشيخ الفَاتِح مُحَمَّد الزُّبَيْر (الدُّورِي)',
@@ -956,6 +1341,68 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
     audioServerSurah: (surahNum: number) => {
       const padded = surahNum.toString().padStart(3, '0');
       return `https://server13.mp3quran.net/husr/doori/${padded}.mp3`;
+    },
+  },
+
+  // Nigerian & West African Iconic Voices
+  {
+    id: 'ahmad_sulaiman_ng',
+    nameArabic: 'الشيخ أَحْمَد سُلَيْمَان (نِيجِيرْيَا)',
+    nameEnglish: 'Sheikh Ahmad Sulaiman (Nigeria)',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Nigeria',
+    countryFlag: '🇳🇬',
+    style: 'Melodic Khushu',
+    bio: 'Foremost Nigerian Quran reciter from Kano State. Celebrated across West Africa for poignant, spiritually electrifying, and melodic recitations that touch every soul.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server10.mp3quran.net/ajm/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'dahiru_bauchi_ng',
+    nameArabic: 'الشيخ دَاهِرُو عُثْمَان بَاوْشِي (وَرْش)',
+    nameEnglish: 'Sheikh Dahiru Usman Bauchi (Warsh)',
+    riwayahId: 'warsh',
+    qiraahId: 'nafi',
+    country: 'Nigeria',
+    countryFlag: '🇳🇬',
+    style: 'Educational',
+    bio: 'Grand scholar of Nigeria and prominent West African master of the Holy Quran in Riwayah Warsh an Nafi, revered for decades of community Quranic teaching.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/kouchi/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'jafar_mahmud_ng',
+    nameArabic: 'الشيخ جَعْفَر مَحْمُود آدَم (نِيجِيرْيَا)',
+    nameEnglish: "Sheikh Ja'far Mahmud Adam (Nigeria)",
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Nigeria',
+    countryFlag: '🇳🇬',
+    style: 'Educational',
+    bio: 'Eminent Islamic scholar of Nigeria from Daura/Kano. Renowned for profound Tafseer, lucid Quranic pronunciation, and Islamic scholarship throughout Hausaland.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/shatr/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'kabiru_gombe_ng',
+    nameArabic: 'الشيخ مُحَمَّد كَبِيرُو هَارُونَ غُومْبِي',
+    nameEnglish: 'Sheikh Muhammad Kabiru Haruna Gombe',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Nigeria',
+    countryFlag: '🇳🇬',
+    style: 'Murattal',
+    bio: 'Esteemed Islamic scholar and dynamic speaker from Gombe, Nigeria, known for resonant Quranic citations and inspirational lectures.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server8.mp3quran.net/afs/${padded}.mp3`;
     },
   },
 
@@ -1009,8 +1456,23 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
       return `https://server16.mp3quran.net/soufi/khalaf/${padded}.mp3`;
     },
   },
+  {
+    id: 'soufi_khallad',
+    nameArabic: 'الشيخ عَبْد الرَّشِيد صُوفِي (خَلَّاد عَنْ حَمْزَة)',
+    nameEnglish: "Sheikh Abdel-Rashid Soufi (Khallad 'an Hamzah)",
+    riwayahId: 'khallad',
+    qiraahId: 'hamzah',
+    country: 'Somalia / Qatar',
+    countryFlag: '🇸🇴',
+    style: 'Melodic Khushu',
+    bio: 'Rendition of Khallad an Hamzah featuring classical Kufan Ishmam and pause characteristics.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server16.mp3quran.net/soufi/khalaf/${padded}.mp3`;
+    },
+  },
 
-  // Ibn Kathir (Al-Bazzi) Reciter
+  // Ibn Kathir (Al-Bazzi & Qunbul) Reciters
   {
     id: 'soufi_bazzi',
     nameArabic: 'الشيخ عَبْد الرَّشِيد صُوفِي (البَزِّي عَنِ ابْنِ كَثِير)',
@@ -1026,8 +1488,119 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
       return `https://server16.mp3quran.net/soufi/bazzi/${padded}.mp3`;
     },
   },
+  {
+    id: 'muftah_sultany_qunbul',
+    nameArabic: 'الشيخ د. مِفْتَاح السَّلْطَنِي (قُنْبُل)',
+    nameEnglish: 'Sheikh Dr. Muftah Alsultany (Qunbul)',
+    riwayahId: 'qunbul',
+    qiraahId: 'ibn_kathir',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Medical doctor and master of all 10 Qira\'at, famous for his certified complete mushaf recordings.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/sultany/qunbul/${padded}.mp3`;
+    },
+  },
 
-  // Ya'qub (Ruways) Reciter
+  // Ibn 'Amir (Hisham & Ibn Dhakwan) Reciters
+  {
+    id: 'muftah_sultany_dhakwan',
+    nameArabic: 'الشيخ د. مِفْتَاح السَّلْطَنِي (ابْن ذَكْوَان)',
+    nameEnglish: 'Sheikh Dr. Muftah Alsultany (Ibn Dhakwan)',
+    riwayahId: 'ibn_dhakwan',
+    qiraahId: 'ibn_amir',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Comprehensive recorded transmission of Ibn Dhakwan an Ibn Amir ash-Shami.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/sultany/dhakwan/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'tareq_daawob_hisham',
+    nameArabic: 'الشيخ طَارِق دَعْوُوب (هِشَام عَنِ ابْنِ عَامِر)',
+    nameEnglish: "Sheikh Tareq Daawob (Hisham 'an Ibn 'Amir)",
+    riwayahId: 'hisham',
+    qiraahId: 'ibn_amir',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Exemplary Libyan scholar and master of the Damascene Qira\'ah of Ibn Amir.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server10.mp3quran.net/daawob/${padded}.mp3`;
+    },
+  },
+
+  // Al-Kisa'i (Abul Harith & Ad-Duri) Reciter
+  {
+    id: 'soufi_duri_kisai',
+    nameArabic: 'الشيخ عَبْد الرَّشِيد صُوفِي (الدُّورِي عَنِ الكِسَائِي)',
+    nameEnglish: "Sheikh Abdel-Rashid Soufi (Ad-Duri 'an Al-Kisa'i)",
+    riwayahId: 'duri_an_kisai',
+    qiraahId: 'kisai',
+    country: 'Somalia / Qatar',
+    countryFlag: '🇸🇴',
+    style: 'Melodic Khushu',
+    bio: 'Authoritative recitation of Ad-Duri an Al-Kisa\'i highlighting classical Imalah.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server16.mp3quran.net/soufi/duri_kisai/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'muftah_sultany_abulharith',
+    nameArabic: 'الشيخ د. مِفْتَاح السَّلْطَنِي (أَبُو الحَارِث عَنِ الكِسَائِي)',
+    nameEnglish: "Sheikh Dr. Muftah Alsultany (Abul-Harith)",
+    riwayahId: 'abul_harith',
+    qiraahId: 'kisai',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Meticulous recording of Abul-Harith an Al-Kisa\'i demonstrating Kufan phonetic elegance.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/sultany/dhakwan/${padded}.mp3`;
+    },
+  },
+
+  // Abu Ja'far (Ibn Wardan & Ibn Jammaz) Reciters
+  {
+    id: 'tareq_daawob_wardan',
+    nameArabic: 'الشيخ طَارِق دَعْوُوب (ابْن وَرْدَان عَنْ أَبِي جَعْفَر)',
+    nameEnglish: "Sheikh Tareq Daawob (Ibn Wardan 'an Abi Ja'far)",
+    riwayahId: 'ibn_wardan',
+    qiraahId: 'abu_jafar',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Renowned certified audio recording of the 8th Qira\'ah of Abu Ja\'far al-Madani.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server10.mp3quran.net/daawob/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'tareq_daawob_jammaz',
+    nameArabic: 'الشيخ طَارِق دَعْوُوب (ابْن جَمَّاز عَنْ أَبِي جَعْفَر)',
+    nameEnglish: "Sheikh Tareq Daawob (Ibn Jammaz 'an Abi Ja'far)",
+    riwayahId: 'ibn_jammaz',
+    qiraahId: 'abu_jafar',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Complete canonical recording of Ibn Jammaz with distinctive Sakt on disjointed letters.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server10.mp3quran.net/daawob/${padded}.mp3`;
+    },
+  },
+
+  // Ya'qub (Ruways & Rawh) Reciters
   {
     id: 'soufi_ruways',
     nameArabic: 'الشيخ عَبْد الرَّشِيد صُوفِي (رُوَيْس عَنْ يَعْقُوب)',
@@ -1043,21 +1616,51 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
       return `https://server16.mp3quran.net/soufi/rowais/${padded}.mp3`;
     },
   },
-
-  // Al-Kisa'i (Ad-Duri 'an Al-Kisa'i) Reciter
   {
-    id: 'soufi_duri_kisai',
-    nameArabic: 'الشيخ عَبْد الرَّشِيد صُوفِي (الدُّورِي عَنِ الكِسَائِي)',
-    nameEnglish: "Sheikh Abdel-Rashid Soufi (Ad-Duri 'an Al-Kisa'i)",
-    riwayahId: 'duri_an_kisai',
-    qiraahId: 'kisai',
-    country: 'Somalia / Qatar',
-    countryFlag: '🇸🇴',
-    style: 'Melodic Khushu',
-    bio: 'Authoritative recitation of Ad-Duri an Al-Kisa\'i highlighting classical Imalah.',
+    id: 'muftah_sultany_rawh',
+    nameArabic: 'الشيخ د. مِفْتَاح السَّلْطَنِي (رَوْح عَنْ يَعْقُوب)',
+    nameEnglish: "Sheikh Dr. Muftah Alsultany (Rawh 'an Ya'qub)",
+    riwayahId: 'rawh',
+    qiraahId: 'yaqub',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Certified audio transmission of Rawh an Ya\'qub al-Hadrami with pristine Basran Tajweed.',
     audioServerSurah: (surahNum: number) => {
       const padded = surahNum.toString().padStart(3, '0');
-      return `https://server16.mp3quran.net/soufi/duri_kisai/${padded}.mp3`;
+      return `https://server11.mp3quran.net/sultany/rawh/${padded}.mp3`;
+    },
+  },
+
+  // Khalaf al-'Ashir (Ishaq & Idris) Reciters
+  {
+    id: 'muftah_sultany_idris',
+    nameArabic: 'الشيخ د. مِفْتَاح السَّلْطَنِي (إِدْرِيس عَنْ خَلَف العَاشِر)',
+    nameEnglish: "Sheikh Dr. Muftah Alsultany (Idris 'an Khalaf)",
+    riwayahId: 'idris',
+    qiraahId: 'khalaf_al_ashir',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Comprehensive certified recording of the 10th Qira\'ah of Khalaf al-Bazzar.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/sultany/dhakwan/${padded}.mp3`;
+    },
+  },
+  {
+    id: 'tareq_daawob_ishaq',
+    nameArabic: 'الشيخ طَارِق دَعْوُوب (إِسْحَاق عَنْ خَلَف العَاشِر)',
+    nameEnglish: "Sheikh Tareq Daawob (Ishaq 'an Khalaf)",
+    riwayahId: 'ishaq',
+    qiraahId: 'khalaf_al_ashir',
+    country: 'Libya',
+    countryFlag: '🇱🇾',
+    style: 'Educational',
+    bio: 'Authoritative recording of Ishaq an Khalaf al-Ashir preserving Baghdadi tradition.',
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server10.mp3quran.net/daawob/${padded}.mp3`;
     },
   },
 ];
@@ -1235,12 +1838,18 @@ export function searchQiraatAndRiwayat(query: string): QiraahSearchResult {
 
   const allReciters = getAllRecitersIncludingUserVoices();
   const matchingReciters = allReciters.filter((item) => {
+    const riwayah = ALL_RIWAYAT.find((r) => r.id === item.riwayahId);
+    const qiraah = ALL_QIRAAT.find((qItem) => qItem.id === item.qiraahId);
     return (
       item.nameArabic.toLowerCase().includes(q) ||
       item.nameEnglish.toLowerCase().includes(q) ||
       item.country.toLowerCase().includes(q) ||
       item.bio.toLowerCase().includes(q) ||
-      item.style.toLowerCase().includes(q)
+      item.style.toLowerCase().includes(q) ||
+      item.riwayahId.toLowerCase().includes(q) ||
+      item.qiraahId.toLowerCase().includes(q) ||
+      (riwayah && (riwayah.nameEnglish.toLowerCase().includes(q) || riwayah.nameArabic.toLowerCase().includes(q))) ||
+      (qiraah && (qiraah.nameEnglish.toLowerCase().includes(q) || qiraah.nameArabic.toLowerCase().includes(q)))
     );
   });
 

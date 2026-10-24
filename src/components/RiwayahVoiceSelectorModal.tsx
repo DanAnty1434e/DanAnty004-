@@ -15,6 +15,8 @@ import {
   Mic,
   Sliders,
   Compass,
+  Video,
+  Camera,
 } from 'lucide-react';
 import {
   ALL_QIRAAT,
@@ -44,6 +46,7 @@ interface RiwayahVoiceSelectorModalProps {
   applyToAllSubjects: boolean;
   onToggleApplyToAllSubjects: (enabled: boolean) => void;
   onOpenRecordStudio?: () => void;
+  onOpenVideoScanner?: () => void;
 }
 
 export function RiwayahVoiceSelectorModal({
@@ -58,10 +61,12 @@ export function RiwayahVoiceSelectorModal({
   applyToAllSubjects,
   onToggleApplyToAllSubjects,
   onOpenRecordStudio,
+  onOpenVideoScanner,
 }: RiwayahVoiceSelectorModalProps) {
   const [selectedTab, setSelectedTab] = useState<'qiraat' | 'riwayat' | 'voices' | 'guide'>('qiraat');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [qiraahCategoryFilter, setQiraahCategoryFilter] = useState<'all' | 'shatibiyyah' | 'durrah'>('all');
+  const [reciterRegionFilter, setReciterRegionFilter] = useState<'all' | 'haramain' | 'egypt' | 'warsh' | 'duri' | 'nigeria' | 'qiraat'>('all');
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
   const [playingReciterId, setPlayingReciterId] = useState<string | null>(null);
   const [appliedNotification, setAppliedNotification] = useState<string | null>(null);
@@ -91,9 +96,39 @@ export function RiwayahVoiceSelectorModal({
   const riwayahReciters = searchResults.matchingReciters.filter(
     (reciter) => reciter.riwayahId === activeRiwayahId
   );
-  const otherReciters = searchResults.matchingReciters.filter(
-    (reciter) => reciter.riwayahId !== activeRiwayahId
-  );
+
+  // All reciters matching search and region category filter
+  const displayedAllReciters = useMemo(() => {
+    return searchResults.matchingReciters.filter((r) => {
+      if (reciterRegionFilter === 'all') return true;
+      if (reciterRegionFilter === 'haramain') {
+        return (
+          ['sudais', 'shuraim', 'maher_al_muaiqly', 'yasser_al_dosari', 'ali_jaber', 'muhammad_ayyub', 'ali_al_huthaify', 'budair', 'baleela', 'khalid_al_ghamdi', 'saad_al_ghamdi', 'shatri', 'qatami', 'ajmy'].includes(r.id) ||
+          r.country.includes('Saudi') ||
+          r.country.includes('Emirates')
+        );
+      }
+      if (reciterRegionFilter === 'egypt') {
+        return ['abdul_basit', 'al_husary_hafs', 'al_minshawi', 'mustafa_ismail', 'banna', 'tablawi', 'jibril'].includes(r.id) || r.country === 'Egypt';
+      }
+      if (reciterRegionFilter === 'warsh') {
+        return r.riwayahId === 'warsh' || r.country === 'Morocco' || r.country === 'Algeria';
+      }
+      if (reciterRegionFilter === 'duri') {
+        return r.riwayahId === 'duri' || r.country === 'Sudan';
+      }
+      if (reciterRegionFilter === 'nigeria') {
+        return r.country === 'Nigeria' || r.id.includes('_ng');
+      }
+      if (reciterRegionFilter === 'qiraat') {
+        return (
+          ['soufi_sousi', 'soufi_shubah', 'soufi_khalaf_hamzah', 'soufi_khallad', 'soufi_bazzi', 'soufi_ruways', 'soufi_duri_kisai', 'tareq_daawob_wardan', 'tareq_daawob_jammaz', 'tareq_daawob_hisham', 'tareq_daawob_ishaq', 'muftah_sultany_dhakwan', 'muftah_sultany_qunbul', 'muftah_sultany_rawh', 'muftah_sultany_abulharith', 'muftah_sultany_idris'].includes(r.id) ||
+          r.qiraahId !== 'asim'
+        );
+      }
+      return true;
+    });
+  }, [searchResults.matchingReciters, reciterRegionFilter]);
 
   const handleTestReciterAudio = (reciter: ReciterVoiceMeta) => {
     if (playingReciterId === reciter.id && previewAudio) {
@@ -571,25 +606,136 @@ export function RiwayahVoiceSelectorModal({
             </div>
           )}
 
-          {/* TAB 3: RECITERS VOICES */}
+          {/* TAB 3: ALL RECITERS DIRECTORY */}
           {selectedTab === 'voices' && (
             <div className="space-y-6">
-              {/* Reciters in Current Riwayah */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
-                    <Award className="w-4 h-4 text-emerald-400" />
-                    <span>Reciters for {currentRiwayah.nameEnglish} ({currentRiwayah.nameArabic})</span>
-                  </h3>
-                  <span className="text-[11px] text-slate-400">
-                    {riwayahReciters.length} verified voice{riwayahReciters.length > 1 ? 's' : ''}
-                  </span>
+              {/* AI Video Scanner Banner */}
+              <div className="bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-900 border border-emerald-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 shrink-0">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>Don't know the reciter? Record a Video!</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        AI Multimodal Scanner
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Record with your phone camera or upload a video clip — Dan anty004 AI identifies the reciter, Qira'ah, Riwayah, and Maqam in seconds.
+                    </p>
+                  </div>
+                </div>
+
+                {onOpenVideoScanner && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenVideoScanner();
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition active:scale-95 shrink-0"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Record Video to Identify</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Regional & Style Filter Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold scrollbar-thin scrollbar-thumb-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setReciterRegionFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    reciterRegionFilter === 'all'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+                  }`}
+                >
+                  All Reciters ({searchResults.matchingReciters.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReciterRegionFilter('haramain')}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    reciterRegionFilter === 'haramain'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+                  }`}
+                >
+                  🇸🇦 Haramain Imams
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReciterRegionFilter('egypt')}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    reciterRegionFilter === 'egypt'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+                  }`}
+                >
+                  🇪🇬 Egyptian Golden Era
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReciterRegionFilter('warsh')}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    reciterRegionFilter === 'warsh'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+                  }`}
+                >
+                  🇲🇦 Warsh & North Africa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReciterRegionFilter('duri')}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    reciterRegionFilter === 'duri'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+                  }`}
+                >
+                  🇸🇩 Sudanese Ad-Duri
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReciterRegionFilter('nigeria')}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    reciterRegionFilter === 'nigeria'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+                  }`}
+                >
+                  🇳🇬 Nigerian Voices
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReciterRegionFilter('qiraat')}
+                  className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    reciterRegionFilter === 'qiraat'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+                  }`}
+                >
+                  🎙️ 10 Qira'at Specialists
+                </button>
+              </div>
+
+              {/* Reciters Directory Grid */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span>Showing {displayedAllReciters.length} reciters:</span>
+                  <span>Click "Preview" to hear sample recitation</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {riwayahReciters.map((reciter) => {
+                  {displayedAllReciters.map((reciter) => {
                     const isSelected = activeReciterId === reciter.id;
                     const isTesting = playingReciterId === reciter.id;
+                    const reciterRiwayah = getRiwayahById(reciter.riwayahId);
 
                     return (
                       <div
@@ -612,9 +758,14 @@ export function RiwayahVoiceSelectorModal({
                               </div>
                             </div>
 
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
-                              {reciter.style}
-                            </span>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-amber-300">
+                                {reciterRiwayah.nameEnglish}
+                              </span>
+                              <span className="text-[9px] text-slate-400">
+                                {reciter.style}
+                              </span>
+                            </div>
                           </div>
 
                           <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed mb-3">
@@ -671,78 +822,6 @@ export function RiwayahVoiceSelectorModal({
                   })}
                 </div>
               </div>
-
-              {/* Other Master Reciters across other Riwayat */}
-              {otherReciters.length > 0 && (
-                <div className="pt-4 border-t border-slate-800">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-300 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      <span>Other World Master Reciters (Across other Riwayat)</span>
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    {otherReciters.map((reciter) => {
-                      const isSelected = activeReciterId === reciter.id;
-                      const isTesting = playingReciterId === reciter.id;
-                      const reciterRiwayah = getRiwayahById(reciter.riwayahId);
-
-                      return (
-                        <div
-                          key={reciter.id}
-                          className="p-4 rounded-2xl border bg-slate-850/60 border-slate-700/60 hover:border-slate-600 transition flex flex-col justify-between"
-                        >
-                          <div>
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-base">{reciter.countryFlag}</span>
-                                  <h4 className="text-sm font-bold text-white">{reciter.nameEnglish}</h4>
-                                </div>
-                                <div className="text-[11px] text-emerald-400 font-['Amiri',serif]">
-                                  {reciter.nameArabic} • {reciterRiwayah.nameArabic}
-                                </div>
-                              </div>
-
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-amber-300">
-                                {reciterRiwayah.nameEnglish}
-                              </span>
-                            </div>
-
-                            <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-3">
-                              {reciter.bio}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-700/60 text-xs">
-                            <button
-                              type="button"
-                              onClick={() => handleTestReciterAudio(reciter)}
-                              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition ${
-                                isTesting
-                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 animate-pulse'
-                                  : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'
-                              }`}
-                            >
-                              {isTesting ? <Pause className="w-3 h-3 fill-amber-400" /> : <Play className="w-3 h-3 fill-emerald-400" />}
-                              <span>{isTesting ? 'Playing...' : 'Preview Voice'}</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleApplyReciter(reciter)}
-                              className="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-emerald-600/50 text-slate-200 border border-slate-700 transition"
-                            >
-                              Switch to Voice & Riwayah
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
