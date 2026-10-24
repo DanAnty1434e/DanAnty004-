@@ -81,6 +81,7 @@ export interface ReciterVoiceMeta {
   audioServerSurah: (surahNumber: number) => string;
   audioServerAyah?: (surahNumber: number, ayahNumber: number) => string;
   isUserRecording?: boolean;
+  aliases?: string[];
 }
 
 // =========================================================================
@@ -708,6 +709,43 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
     },
   },
   {
+    id: 'yasser_al_dosari',
+    nameArabic: 'الشيخ يَاسِر الدَّوْسَرِي',
+    nameEnglish: 'Sheikh Yasir Al-Dosari (ياسر الدوسري)',
+    riwayahId: 'hafs',
+    qiraahId: 'asim',
+    country: 'Saudi Arabia',
+    countryFlag: '🇸🇦',
+    style: 'Melodic Khushu',
+    bio: 'Imam and Khatib of the Grand Mosque (Masjid al-Haram) in Makkah al-Mukarramah. Celebrated globally for his powerful soaring pitch, majestic vocal range, and intensely emotional Taraweeh khushu.',
+    aliases: [
+      'yasir',
+      'addosari',
+      'yasir addosari',
+      'yasser',
+      'yasser al-dosari',
+      'yasser aldossary',
+      'yasir al-dosari',
+      'yasir al-dawsari',
+      'dosari',
+      'dossary',
+      'dawsari',
+      'الدوسري',
+      'ياسر',
+      'ياسر الدوسري',
+      'imam haram dosari',
+    ],
+    audioServerSurah: (surahNum: number) => {
+      const padded = surahNum.toString().padStart(3, '0');
+      return `https://server11.mp3quran.net/yasser/${padded}.mp3`;
+    },
+    audioServerAyah: (surahNum: number, ayahNum: number) => {
+      const s = surahNum.toString().padStart(3, '0');
+      const a = ayahNum.toString().padStart(3, '0');
+      return `https://everyayah.com/data/Yasser_Ad-Dussary_128kbps/${s}${a}.mp3`;
+    },
+  },
+  {
     id: 'abdul_basit',
     nameArabic: 'الشيخ عَبْد البَاسِط عَبْد الصَّمَد',
     nameEnglish: 'Sheikh Abdul Basit Abdul Samad',
@@ -805,26 +843,6 @@ export const ALL_RECITERS: ReciterVoiceMeta[] = [
       const s = surahNum.toString().padStart(3, '0');
       const a = ayahNum.toString().padStart(3, '0');
       return `https://everyayah.com/data/Ghamadi_40kbps/${s}${a}.mp3`;
-    },
-  },
-  {
-    id: 'yasser_al_dosari',
-    nameArabic: 'الشيخ يَاسِر الدَّوْسَرِي',
-    nameEnglish: 'Sheikh Yasser Al-Dosari',
-    riwayahId: 'hafs',
-    qiraahId: 'asim',
-    country: 'Saudi Arabia',
-    countryFlag: '🇸🇦',
-    style: 'Melodic Khushu',
-    bio: 'Imam of the Grand Mosque in Makkah. Celebrated for powerful, soaring pitch, majestic vocal range, and heartfelt emotional delivery.',
-    audioServerSurah: (surahNum: number) => {
-      const padded = surahNum.toString().padStart(3, '0');
-      return `https://server11.mp3quran.net/yasser/${padded}.mp3`;
-    },
-    audioServerAyah: (surahNum: number, ayahNum: number) => {
-      const s = surahNum.toString().padStart(3, '0');
-      const a = ayahNum.toString().padStart(3, '0');
-      return `https://everyayah.com/data/Yasser_Ad-Dussary_128kbps/${s}${a}.mp3`;
     },
   },
   {
@@ -1734,6 +1752,18 @@ export function getRiwayatForQiraah(qiraahId: QiraahId | string): RiwayahMeta[] 
 
 // Get reciter by ID, seamlessly incorporating user recordings
 export function getReciterById(id: string): ReciterVoiceMeta {
+  // Direct alias check for Sheikh Yasir Al-Dosari
+  if (
+    id === 'yasser_al_dosari' ||
+    id === 'yasir_al_dosari' ||
+    id === 'yasir_addosari' ||
+    id === 'dosari' ||
+    id === 'addosari'
+  ) {
+    const dosari = ALL_RECITERS.find((r) => r.id === 'yasser_al_dosari');
+    if (dosari) return dosari;
+  }
+
   // Check built-in reciters first
   const found = ALL_RECITERS.find((r) => r.id === id);
   if (found) return found;
@@ -1808,12 +1838,18 @@ export function searchQiraatAndRiwayat(query: string): QiraahSearchResult {
     };
   }
 
+  const qClean = q.replace(/[-_'\s]/g, '');
+
   const matchingQiraat = ALL_QIRAAT.filter((item) => {
+    const nameClean = item.nameEnglish.toLowerCase().replace(/[-_'\s]/g, '');
+    const imamClean = item.imamEnglish.toLowerCase().replace(/[-_'\s]/g, '');
     return (
       item.nameArabic.toLowerCase().includes(q) ||
       item.nameEnglish.toLowerCase().includes(q) ||
+      nameClean.includes(qClean) ||
       item.imamArabic.toLowerCase().includes(q) ||
       item.imamEnglish.toLowerCase().includes(q) ||
+      imamClean.includes(qClean) ||
       item.city.toLowerCase().includes(q) ||
       item.cityArabic.toLowerCase().includes(q) ||
       item.category.toLowerCase().includes(q) ||
@@ -1822,13 +1858,17 @@ export function searchQiraatAndRiwayat(query: string): QiraahSearchResult {
   });
 
   const matchingRiwayat = ALL_RIWAYAT.filter((item) => {
+    const nameClean = item.nameEnglish.toLowerCase().replace(/[-_'\s]/g, '');
+    const rawiClean = item.rawiEnglish.toLowerCase().replace(/[-_'\s]/g, '');
     return (
       item.nameArabic.toLowerCase().includes(q) ||
       item.nameEnglish.toLowerCase().includes(q) ||
+      nameClean.includes(qClean) ||
       item.readerArabic.toLowerCase().includes(q) ||
       item.readerEnglish.toLowerCase().includes(q) ||
       item.rawiArabic.toLowerCase().includes(q) ||
       item.rawiEnglish.toLowerCase().includes(q) ||
+      rawiClean.includes(qClean) ||
       item.origins.toLowerCase().includes(q) ||
       item.primaryRegions.toLowerCase().includes(q) ||
       item.description.toLowerCase().includes(q) ||
@@ -1840,9 +1880,24 @@ export function searchQiraatAndRiwayat(query: string): QiraahSearchResult {
   const matchingReciters = allReciters.filter((item) => {
     const riwayah = ALL_RIWAYAT.find((r) => r.id === item.riwayahId);
     const qiraah = ALL_QIRAAT.find((qItem) => qItem.id === item.qiraahId);
+    const nameClean = item.nameEnglish.toLowerCase().replace(/[-_'\s]/g, '');
+    const aliasesMatch =
+      item.aliases &&
+      item.aliases.some((alias) => {
+        const aClean = alias.toLowerCase().replace(/[-_'\s]/g, '');
+        return (
+          alias.toLowerCase().includes(q) ||
+          q.includes(alias.toLowerCase()) ||
+          aClean.includes(qClean) ||
+          qClean.includes(aClean)
+        );
+      });
+
     return (
       item.nameArabic.toLowerCase().includes(q) ||
       item.nameEnglish.toLowerCase().includes(q) ||
+      nameClean.includes(qClean) ||
+      Boolean(aliasesMatch) ||
       item.country.toLowerCase().includes(q) ||
       item.bio.toLowerCase().includes(q) ||
       item.style.toLowerCase().includes(q) ||

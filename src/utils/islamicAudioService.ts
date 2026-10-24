@@ -213,7 +213,7 @@ class IslamicAudioEngine {
 
     // Otherwise use Web Speech Synthesis with Arabic voice support
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      alert('Speech audio playback is not supported on this browser.');
+      console.warn('Speech audio playback is not supported on this browser environment.');
       return;
     }
 

@@ -281,14 +281,14 @@ export function RiwayahVoiceSelectorModal({
         </div>
 
         {/* Search Bar Across All Qira'at, Riwayat & Reciters */}
-        <div className="p-3 bg-slate-900/90 border-b border-slate-800 px-5">
+        <div className="p-3 bg-slate-900/90 border-b border-slate-800 px-5 space-y-2">
           <div className="relative">
             <Search className="w-4 h-4 text-emerald-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search any Qira'ah, Riwayah, Imam, Rawi, Region (e.g. Nafi', Warsh, Hamzah, Sudan, Imalah, Idgham)..."
+              placeholder="Search any Qira'ah, Riwayah, Imam, Rawi, City, or Reciter (e.g. Yasir Addosari, Warsh, Nafi', Hamzah, Sudan)..."
               className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-emerald-500 transition"
             />
             {searchQuery && (
@@ -300,6 +300,72 @@ export function RiwayahVoiceSelectorModal({
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
+          </div>
+
+          {/* Quick Filter Presets */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs font-bold scrollbar-thin">
+            <span className="text-[11px] text-slate-400 font-semibold shrink-0">Quick picks:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('yasir addosari');
+                setSelectedTab('voices');
+                const dosari = allReciters.find((r) => r.id === 'yasser_al_dosari');
+                if (dosari) handleApplyReciter(dosari);
+              }}
+              className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1 shrink-0"
+            >
+              <span>✨ Sheikh Yasir Al-Dosari (ياسر الدوسري)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('Warsh');
+                setSelectedTab('riwayat');
+              }}
+              className="px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-[11px] whitespace-nowrap transition shrink-0"
+            >
+              Warsh 'an Nafi'
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('Hafs');
+                setSelectedTab('riwayat');
+              }}
+              className="px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-[11px] whitespace-nowrap transition shrink-0"
+            >
+              Hafs 'an 'Asim
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('Qalun');
+                setSelectedTab('riwayat');
+              }}
+              className="px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-[11px] whitespace-nowrap transition shrink-0"
+            >
+              Qalun
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('Ad-Duri');
+                setSelectedTab('riwayat');
+              }}
+              className="px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-[11px] whitespace-nowrap transition shrink-0"
+            >
+              Ad-Duri
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+              }}
+              className="px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-400 text-[11px] whitespace-nowrap transition shrink-0"
+            >
+              Clear
+            </button>
           </div>
         </div>
 

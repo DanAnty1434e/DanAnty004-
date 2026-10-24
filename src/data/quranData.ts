@@ -581,7 +581,7 @@ export function getSurahAudioUrl(surahNumber: number, reciterId?: string): strin
   if (reciterId === 'al_minshawi') return `https://server10.mp3quran.net/minsh/${padded}.mp3`;
   if (reciterId === 'maher_al_muaiqly') return `https://server12.mp3quran.net/maher/${padded}.mp3`;
   if (reciterId === 'saad_al_ghamdi') return `https://server7.mp3quran.net/s_gmd/${padded}.mp3`;
-  if (reciterId === 'yasser_al_dosari') return `https://server11.mp3quran.net/yasser/${padded}.mp3`;
+  if (reciterId === 'yasser_al_dosari' || reciterId === 'yasir_al_dosari' || reciterId === 'yasir_addosari' || reciterId === 'dosari') return `https://server11.mp3quran.net/yasser/${padded}.mp3`;
   if (reciterId === 'omar_al_qazabri') return `https://server9.mp3quran.net/omar_warsh/${padded}.mp3`;
   if (reciterId === 'yasin_al_jazairi') return `https://server11.mp3quran.net/jazaeri/${padded}.mp3`;
   if (reciterId === 'al_husary_warsh') return `https://server13.mp3quran.net/husr/warsh/${padded}.mp3`;
@@ -610,7 +610,7 @@ export function getAyahAudioUrl(surahNumber: number, ayahNumber: number, reciter
   if (reciterId === 'al_minshawi') return `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`;
   if (reciterId === 'maher_al_muaiqly') return `https://everyayah.com/data/MaherAlMuaiqly128kbps/${s}${a}.mp3`;
   if (reciterId === 'saad_al_ghamdi') return `https://everyayah.com/data/Ghamadi_40kbps/${s}${a}.mp3`;
-  if (reciterId === 'yasser_al_dosari') return `https://everyayah.com/data/Yasser_Ad-Dussary_128kbps/${s}${a}.mp3`;
+  if (reciterId === 'yasser_al_dosari' || reciterId === 'yasir_al_dosari' || reciterId === 'yasir_addosari' || reciterId === 'dosari') return `https://everyayah.com/data/Yasser_Ad-Dussary_128kbps/${s}${a}.mp3`;
   if (reciterId === 'ali_al_huthaify') return `https://everyayah.com/data/Hudaify_128kbps/${s}${a}.mp3`;
   return `https://everyayah.com/data/Alafasy_128kbps/${s}${a}.mp3`;
 }

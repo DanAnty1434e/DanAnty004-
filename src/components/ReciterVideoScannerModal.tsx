@@ -554,14 +554,45 @@ export function ReciterVideoScannerModal({
             )}
 
             {/* Optional Context/Hint Input */}
-            <div className="flex items-center gap-2 w-full sm:w-auto flex-1 sm:max-w-xs">
+            <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1 sm:max-w-md">
               <input
                 type="text"
-                placeholder="Optional hint (e.g. Sudais, Warsh, Nigeria)..."
+                placeholder="Optional hint (e.g. Yasir Addosari, Sudais, Warsh, Nigeria)..."
                 value={userHint}
                 onChange={(e) => setUserHint(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 text-xs px-3 py-2 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none"
               />
+              <div className="flex items-center gap-1 overflow-x-auto text-[10px] text-slate-400">
+                <span className="shrink-0">Suggestions:</span>
+                <button
+                  type="button"
+                  onClick={() => setUserHint('Sheikh Yasir Al-Dosari')}
+                  className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold whitespace-nowrap transition"
+                >
+                  ✨ Yasir Al-Dosari
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserHint('Sheikh Abdul Rahman Al-Sudais')}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition"
+                >
+                  Al-Sudais
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserHint('Omar Al-Qazabri (Warsh)')}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition"
+                >
+                  Warsh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserHint('Nourin Mohamed Siddiq (Ad-Duri)')}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition"
+                >
+                  Ad-Duri
+                </button>
+              </div>
             </div>
           </div>
 

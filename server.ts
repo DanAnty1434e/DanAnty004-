@@ -833,6 +833,25 @@ app.post("/api/identify-reciter", async (req, res) => {
         countryFlag: "🇰🇼",
       },
       {
+        reciterName: "Sheikh Yasir Al-Dosari",
+        reciterArabic: "الشيخ يَاسِر الدَّوْسَرِي",
+        matchedReciterId: "yasser_al_dosari",
+        qiraah: "Qira'at 'Asim al-Kufi",
+        riwayah: "Hafs 'an 'Asim",
+        confidenceScore: 99,
+        detectedSurah: "Surah Al-Furqan / Surah Al-Mulk",
+        maqam: "Maqam Bayati / Hijaz / Saba",
+        vocalStyle: "Melodic Khushu & Powerful Soaring Pitch",
+        distinctiveFeatures: [
+          "Powerful, soaring, heart-penetrating vocal register with intense emotional khushu",
+          "Imam of Masjid al-Haram in Makkah with iconic weeping Taraweeh cadence",
+          "Flawless Tajweed articulation with deep resonance and dynamic melodic modulation",
+        ],
+        biography: "Imam and Khatib of the Grand Mosque (Masjid al-Haram) in Makkah al-Mukarramah, Associate Professor at King Saud University, and one of the most beloved voices in the Islamic world.",
+        country: "Saudi Arabia",
+        countryFlag: "🇸🇦",
+      },
+      {
         reciterName: "Sheikh Abdul Rahman Al-Sudais",
         reciterArabic: "الشيخ عَبْد الرَّحْمَن السُّدَيْس",
         matchedReciterId: "sudais",
@@ -951,18 +970,28 @@ app.post("/api/identify-reciter", async (req, res) => {
     // Smart heuristic matching if hint or filename is present
     const hintLower = (reciterHint + " " + videoName + " " + description).toLowerCase();
     let bestFallback = fallbackCatalog[0];
-    if (hintLower.includes("sudais") || hintLower.includes("haramain") || hintLower.includes("makkah")) {
-      bestFallback = fallbackCatalog[1];
+    if (
+      hintLower.includes("dosari") ||
+      hintLower.includes("dawsari") ||
+      hintLower.includes("addosari") ||
+      hintLower.includes("yasser") ||
+      hintLower.includes("yasir") ||
+      hintLower.includes("الدوسري") ||
+      hintLower.includes("ياسر")
+    ) {
+      bestFallback = fallbackCatalog[1]; // Yasir Al-Dosari
+    } else if (hintLower.includes("sudais")) {
+      bestFallback = fallbackCatalog[2]; // Sudais
     } else if (hintLower.includes("minshawi") || hintLower.includes("weeping") || hintLower.includes("egypt")) {
-      bestFallback = fallbackCatalog[2];
+      bestFallback = fallbackCatalog[3]; // Minshawi
     } else if (hintLower.includes("nourin") || hintLower.includes("sudan") || hintLower.includes("duri")) {
-      bestFallback = fallbackCatalog[3];
+      bestFallback = fallbackCatalog[4]; // Nourin
     } else if (hintLower.includes("sulaiman") || hintLower.includes("nigeria") || hintLower.includes("kano") || hintLower.includes("hausa")) {
-      bestFallback = fallbackCatalog[4];
+      bestFallback = fallbackCatalog[5]; // Sulaiman
     } else if (hintLower.includes("qazabri") || hintLower.includes("warsh") || hintLower.includes("morocco") || hintLower.includes("maghreb")) {
-      bestFallback = fallbackCatalog[5];
+      bestFallback = fallbackCatalog[6]; // Qazabri
     } else if (hintLower.includes("soufi") || hintLower.includes("sousi") || hintLower.includes("ten") || hintLower.includes("10")) {
-      bestFallback = fallbackCatalog[6];
+      bestFallback = fallbackCatalog[7]; // Soufi
     }
 
     if (!ai) {
