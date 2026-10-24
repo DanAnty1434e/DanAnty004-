@@ -57,10 +57,10 @@ export function WelcomeAboutModal({
 
           <div className="relative z-10 flex items-start justify-between">
             <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-xs text-white text-[11px] font-black uppercase tracking-wider rounded-full border border-white/20 flex items-center gap-1.5">
                   <img src="/icon.svg" alt="" className="w-3.5 h-3.5" />
-                  Welcome to Dan anty004
+                  Dan anty004 Web Application
                 </span>
                 <span className="px-3 py-1 bg-amber-400 text-slate-950 text-[11px] font-black uppercase tracking-wider rounded-full flex items-center gap-1 shadow-xs">
                   <Sparkles className="w-3 h-3 fill-slate-950" />
@@ -69,7 +69,7 @@ export function WelcomeAboutModal({
               </div>
 
               <h1 className="text-xl sm:text-2xl font-black font-['Outfit',sans-serif] tracking-tight">
-                Dan anty004 — All Subjects, 10 Qira&apos;at, Exam Prep & Offline Phone Badge
+                Dan anty004 — Universal Academy & Holy Quran Web Application
               </h1>
 
               <div className="flex items-center gap-2 pt-1 text-xs text-indigo-200 font-medium">
@@ -99,7 +99,7 @@ export function WelcomeAboutModal({
                   : 'bg-white/10 text-white hover:bg-white/20'
               }`}
             >
-              📖 What This Web Is About
+              🌐 What This Web App Is About
             </button>
             <button
               onClick={() => setActiveTab('creator')}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Smartphone,
   ShieldCheck,
@@ -14,6 +14,16 @@ import {
   Phone,
   BookmarkPlus,
   Compass,
+  Monitor,
+  Maximize2,
+  Minimize2,
+  Command,
+  Copy,
+  Check,
+  Globe,
+  HardDrive,
+  Laptop,
+  Layers,
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
@@ -35,9 +45,19 @@ export function PhonePinBadgeModal({ isOpen, onClose }: PhonePinBadgeModalProps)
     badgingSupported,
   } = usePWAInstall();
 
-  const [activeTab, setActiveTab] = useState<'preview' | 'instructions' | 'badging'>('preview');
+  const [activeTab, setActiveTab] = useState<'webapp' | 'preview' | 'instructions' | 'badging'>('webapp');
   const [installSuccess, setInstallSuccess] = useState(false);
   const [testCount, setTestCount] = useState<number>(badgeCount || 1);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement));
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -53,36 +73,73 @@ export function PhonePinBadgeModal({ isOpen, onClose }: PhonePinBadgeModalProps)
     updateBadge(num);
   };
 
+  const handleToggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch {
+      // Ignored if blocked by browser policy
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Dan anty004 Web Application',
+          text: 'Dan anty004 Universal Academy & Holy Quran Web Application with 10 Qira\'at, CBT Exam Prep, and standalone phone badge.',
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2500);
+      }
+    } catch {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn">
       <div
-        className="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-2xl shadow-2xl max-w-xl w-full max-h-[92vh] flex flex-col overflow-hidden text-slate-800 dark:text-slate-100"
+        className="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden text-slate-800 dark:text-slate-100"
         role="dialog"
         aria-labelledby="pin-modal-title"
       >
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 p-5 text-white flex items-center justify-between shadow-md">
+        <div className="relative bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 p-5 text-white flex items-center justify-between shadow-md">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-emerald-950/40 border border-amber-400/50 flex items-center justify-center shadow-inner overflow-hidden p-1">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-950/60 border border-amber-400/70 flex items-center justify-center shadow-inner overflow-hidden p-1">
               <img src="/icon.svg" alt="Dan anty004 Badge" className="w-full h-full object-contain drop-shadow" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 id="pin-modal-title" className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 id="pin-modal-title" className="text-xl font-extrabold tracking-tight text-white flex items-center gap-1.5 font-['Outfit',sans-serif]">
                   Dan anty004
                 </h2>
-                <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 rounded-full shadow-sm">
-                  Phone Badge
+                <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 rounded-full shadow-xs">
+                  Web Application
+                </span>
+                <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-700/80 text-emerald-100 rounded-full border border-emerald-400/40">
+                  Phone Badge Ready
                 </span>
               </div>
-              <p className="text-xs text-emerald-100 mt-0.5">
-                Pin & Upload to Phone Home Screen (Standalone App)
+              <p className="text-xs text-emerald-100/90 mt-0.5">
+                Official Web Application & Standalone Phone Launcher Badge
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg bg-emerald-900/40 hover:bg-emerald-900/80 text-emerald-100 hover:text-white transition"
+            className="p-2 rounded-xl bg-emerald-950/50 hover:bg-emerald-950/80 text-emerald-100 hover:text-white transition"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -90,59 +147,200 @@ export function PhonePinBadgeModal({ isOpen, onClose }: PhonePinBadgeModalProps)
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 pt-2">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 pt-2 overflow-x-auto no-scrollbar gap-1">
+          <button
+            onClick={() => setActiveTab('webapp')}
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition flex items-center gap-1.5 ${
+              activeTab === 'webapp'
+                ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
+            }`}
+          >
+            <Globe className="w-4 h-4 text-emerald-600" />
+            🌐 Web App Mode
+          </button>
           <button
             onClick={() => setActiveTab('preview')}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition flex items-center gap-1.5 ${
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition flex items-center gap-1.5 ${
               activeTab === 'preview'
                 ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
             }`}
           >
             <Smartphone className="w-4 h-4" />
-            Phone Home Screen
+            📱 Phone Pin & Badge
           </button>
           <button
             onClick={() => setActiveTab('instructions')}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition flex items-center gap-1.5 ${
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition flex items-center gap-1.5 ${
               activeTab === 'instructions'
                 ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
             }`}
           >
             <Download className="w-4 h-4" />
-            How to Pin & Upload
+            Install Instructions
           </button>
           <button
             onClick={() => setActiveTab('badging')}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition flex items-center gap-1.5 ${
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition flex items-center gap-1.5 ${
               activeTab === 'badging'
                 ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
             }`}
           >
             <Bell className="w-4 h-4" />
-            Live App Badge API
+            Live Badge API
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-5 overflow-y-auto space-y-5 text-sm">
-          {/* Status Alert if already installed/pinned */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 text-sm flex-1">
+          {/* Status Alert if installed or web app mode active */}
           {isInstalled && (
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-xl flex items-center gap-3 text-emerald-800 dark:text-emerald-200">
+            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-2xl flex items-center gap-3 text-emerald-800 dark:text-emerald-200">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <div className="text-xs">
-                <span className="font-bold">Active in Mobile Standalone Mode!</span> Dan anty004 is pinned to your phone home screen with launcher badge and offline storage enabled.
+                <span className="font-bold">Active in Standalone Phone / App Mode!</span> Dan anty004 is pinned to your home screen with its official icon badge, full offline caching, and instant launch speed.
               </div>
             </div>
           )}
 
-          {/* TAB 1: PHONE PREVIEW */}
+          {/* TAB 1: WEB APPLICATION (DESKTOP & BROWSER MODE) */}
+          {activeTab === 'webapp' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl">
+                <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 text-sm">
+                  <Monitor className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+                  <span>Full-Scale Web Application</span>
+                  <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-black rounded-md uppercase">
+                    Universal Web
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Dan anty004 runs natively inside any modern web browser across Desktop PC, Mac, Linux, Chromebook, iPad/Tablet, and Mobile. Enjoy continuous study, Quran recitation in 10 Qira&apos;at, CBT simulations, and audio recording with zero installation needed.
+                </p>
+              </div>
+
+              {/* Web App Action Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Fullscreen Mode */}
+                <button
+                  onClick={handleToggleFullscreen}
+                  className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 bg-white dark:bg-slate-800/70 text-left transition flex items-center justify-between group shadow-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:scale-105 transition">
+                      {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                        {isFullscreen ? 'Exit Full-Screen Web' : 'Full-Screen Web App'}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Distraction-free learning mode
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
+                    Key: F
+                  </span>
+                </button>
+
+                {/* Share / Copy Web Link */}
+                <button
+                  onClick={handleCopyShareLink}
+                  className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 bg-white dark:bg-slate-800/70 text-left transition flex items-center justify-between group shadow-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-700 dark:text-indigo-400 group-hover:scale-105 transition">
+                      {copiedLink ? <Check className="w-5 h-5 text-emerald-600" /> : <Share2 className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                        {copiedLink ? 'Link Copied to Clipboard!' : 'Share / Bookmark Web App'}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Share Dan anty004 with classmates
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
+                    {copiedLink ? 'Copied' : 'Share'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Web Keyboard Shortcuts */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <Command className="w-3.5 h-3.5 text-emerald-600" />
+                    Web App Power-User Keyboard Shortcuts
+                  </span>
+                  <span className="text-[10px] text-slate-500">Fast Web Navigation</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-slate-600 dark:text-slate-300 text-[11px]">Curriculum Search</span>
+                    <kbd className="font-mono text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 font-bold">
+                      Cmd/Ctrl+K
+                    </kbd>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-slate-600 dark:text-slate-300 text-[11px]">Quick AI Tutor</span>
+                    <kbd className="font-mono text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 font-bold">
+                      Shift+A
+                    </kbd>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-slate-600 dark:text-slate-300 text-[11px]">Full Screen</span>
+                    <kbd className="font-mono text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 font-bold">
+                      F
+                    </kbd>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-slate-600 dark:text-slate-300 text-[11px]">Close Any Modal</span>
+                    <kbd className="font-mono text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 font-bold">
+                      Esc
+                    </kbd>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-slate-600 dark:text-slate-300 text-[11px]">Switch Views</span>
+                    <kbd className="font-mono text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 font-bold">
+                      1 - 7
+                    </kbd>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-slate-600 dark:text-slate-300 text-[11px]">Web App Center</span>
+                    <kbd className="font-mono text-[10px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 font-bold">
+                      ?
+                    </kbd>
+                  </div>
+                </div>
+              </div>
+
+              {/* Web App Cross-Device compatibility */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                  <Laptop className="w-4 h-4 text-emerald-600" />
+                  <span>Works seamlessly across Google Chrome, Edge, Safari, Firefox, Opera, and Brave.</span>
+                </div>
+                <button
+                  onClick={() => setActiveTab('preview')}
+                  className="text-emerald-700 dark:text-emerald-400 font-bold hover:underline shrink-0"
+                >
+                  Pin to Phone &rarr;
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: PHONE PREVIEW (PHONE PIN & BADGE) */}
           {activeTab === 'preview' && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in duration-200">
               <div className="text-xs text-slate-600 dark:text-slate-300">
-                When you pin Dan anty004 on your phone (not in a browser tab), it launches full-screen like a native Android/iOS application with its official icon badge and the exact title <strong className="text-emerald-700 dark:text-emerald-400">Dan anty004</strong>:
+                When you pin or upload Dan anty004 to your phone (standalone mode, not in a browser tab), it launches full-screen with its official icon badge and the exact name <strong className="text-emerald-700 dark:text-emerald-400 font-bold">Dan anty004</strong>:
               </div>
 
               {/* Realistic Mobile Screen Mockup */}
@@ -194,7 +392,7 @@ export function PhonePinBadgeModal({ isOpen, onClose }: PhonePinBadgeModalProps)
                             004
                           </div>
                         </div>
-                        <span className="text-[11px] font-bold text-white tracking-tight drop-shadow">
+                        <span className="text-[11px] font-bold text-white tracking-tight drop-shadow font-['Outfit',sans-serif]">
                           Dan anty004
                         </span>
                       </div>
@@ -249,9 +447,9 @@ export function PhonePinBadgeModal({ isOpen, onClose }: PhonePinBadgeModalProps)
             </div>
           )}
 
-          {/* TAB 2: INSTRUCTIONS */}
+          {/* TAB 3: INSTRUCTIONS */}
           {activeTab === 'instructions' && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in duration-200">
               {/* Android Instructions */}
               <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl space-y-2.5">
                 <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 text-sm">
@@ -316,9 +514,9 @@ export function PhonePinBadgeModal({ isOpen, onClose }: PhonePinBadgeModalProps)
             </div>
           )}
 
-          {/* TAB 3: LIVE BADGE API */}
+          {/* TAB 4: LIVE BADGE API */}
           {activeTab === 'badging' && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in duration-200">
               <div className="text-xs text-slate-600 dark:text-slate-300">
                 When Dan anty004 is pinned to your phone, modern mobile operating systems support the <strong>Web App Badging API</strong>. This shows an unread notification count badge directly over the Dan anty004 icon on your launcher!
               </div>
@@ -394,7 +592,7 @@ export function PhonePinBadgeModal({ isOpen, onClose }: PhonePinBadgeModalProps)
         <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>App Name: <strong className="text-slate-800 dark:text-slate-200">Dan anty004</strong></span>
+            <span>Name: <strong className="text-slate-800 dark:text-slate-200">Dan anty004</strong> (Web Application & Phone Badge)</span>
           </div>
 
           <button

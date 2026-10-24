@@ -128,8 +128,9 @@ export function SubjectGrid({
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-8 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-block px-3 py-1 bg-white/10 backdrop-blur-xs text-indigo-300 border border-indigo-400/30 text-xs font-bold rounded-full uppercase tracking-wider">
-                DanAnty004 Universal Academy
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-xs text-emerald-300 border border-emerald-400/30 text-xs font-bold rounded-full uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Dan anty004 Web Application
               </span>
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-400 text-slate-950 text-xs font-black rounded-full shadow-xs">
                 <Coins className="w-3.5 h-3.5" />

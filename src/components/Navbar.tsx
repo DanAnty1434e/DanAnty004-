@@ -27,6 +27,10 @@ import {
   Moon,
   Smartphone,
   ShieldCheck,
+  Globe,
+  Maximize2,
+  Minimize2,
+  Monitor,
 } from 'lucide-react';
 import { UserProgress, SubjectId, NetworkStatus, AppView, CLASS_LEVELS } from '../types';
 import { CURRICULUM_DATA } from '../data/curriculum';
@@ -69,6 +73,7 @@ export function Navbar({
   const [netStatus, setNetStatus] = useState<NetworkStatus>(getLiveNetworkStatus());
   const [dataStats, setDataStats] = useState(getSavedDataStats());
   const { isInstalled, isInstallable, badgeCount } = usePWAInstall();
+  const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement));
 
   const currentClassDef = CLASS_LEVELS.find((c) => c.id === (progress.selectedClass || 'sss')) || CLASS_LEVELS[2];
 
@@ -77,17 +82,34 @@ export function Navbar({
       setNetStatus(getLiveNetworkStatus());
       setDataStats(getSavedDataStats());
     };
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
     window.addEventListener('online', handleUpdate);
     window.addEventListener('offline', handleUpdate);
     window.addEventListener('dananty_data_usage_updated', handleUpdate);
     window.addEventListener('dananty_data_mode_changed', handleUpdate);
     return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
       window.removeEventListener('online', handleUpdate);
       window.removeEventListener('offline', handleUpdate);
       window.removeEventListener('dananty_data_usage_updated', handleUpdate);
       window.removeEventListener('dananty_data_mode_changed', handleUpdate);
     };
   }, []);
+
+  const handleToggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch {}
+  };
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shadow-2xs">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -99,6 +121,7 @@ export function Navbar({
               id="brand-logo-btn"
               onClick={() => onNavigate('home')}
               className="flex items-center space-x-2.5 sm:space-x-3 group text-left focus:outline-hidden"
+              title="Dan anty004 Web Application - Home"
             >
               <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 border border-amber-400/80 flex items-center justify-center p-1 text-white shadow-xs group-hover:scale-105 transition-transform overflow-visible">
                 <img src="/icon.svg" alt="Dan anty004 Badge" className="w-full h-full object-contain drop-shadow" />
@@ -109,16 +132,19 @@ export function Navbar({
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 font-['Outfit',sans-serif]">
                     Dan anty<span className="text-emerald-700">004</span>
+                  </span>
+                  <span className="inline-flex items-center px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider bg-emerald-600 text-white rounded shadow-2xs">
+                    Web App
                   </span>
                   <span className="hidden sm:inline-flex items-center px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider bg-amber-400/90 text-slate-950 rounded shadow-2xs">
                     Badge
                   </span>
                 </div>
                 <span className="text-[9px] sm:text-[10px] block text-slate-400 font-semibold leading-none mt-0.5">
-                  Universal Academy • By Aliyu Kamal Hamid
+                  Universal Academy & Holy Quran Web Application
                 </span>
               </div>
             </button>
@@ -359,20 +385,37 @@ export function Navbar({
               <span className="hidden md:inline text-xs">Search</span>
             </button>
 
-            {/* Pin to Phone / Dan anty004 Badge Button */}
+            {/* Desktop Fullscreen Web App Mode Toggle */}
             <button
-              id="open-phone-pin-btn"
+              id="toggle-fullscreen-btn"
+              onClick={handleToggleFullscreen}
+              className="hidden md:flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold transition"
+              title={isFullscreen ? 'Exit Full-Screen Web App (F)' : 'Enter Full-Screen Web App (F)'}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5 text-emerald-700" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5 text-slate-500" />
+              )}
+              <span className="hidden lg:inline text-[11px] font-mono">
+                {isFullscreen ? 'Exit' : 'Full-Screen'}
+              </span>
+            </button>
+
+            {/* Dan anty004 Web Application & Phone Badge Button */}
+            <button
+              id="open-webapp-badge-btn"
               onClick={onOpenPhonePinModal}
               className={`relative flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-2xs group ${
                 isInstalled
                   ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900'
                   : 'bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white border-emerald-600'
               }`}
-              title="Pin & Upload Dan anty004 to your phone with official launcher badge"
+              title="Dan anty004 Web Application & Standalone Phone Launcher Badge"
             >
-              <Smartphone className={`w-3.5 h-3.5 ${isInstalled ? 'text-emerald-700' : 'text-amber-300'} group-hover:scale-110 transition-transform`} />
+              <Globe className={`w-3.5 h-3.5 ${isInstalled ? 'text-emerald-700' : 'text-amber-300'} group-hover:rotate-12 transition-transform`} />
               <span className="hidden sm:inline">
-                {isInstalled ? 'Phone App' : 'Pin to Phone'}
+                {isInstalled ? 'Installed App' : 'Web App'}
               </span>
               <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${
                 isInstalled ? 'bg-emerald-200 text-emerald-950' : 'bg-amber-400 text-slate-950'

@@ -90,12 +90,44 @@ export default function App() {
     };
   }, []);
 
-  // Global shortcut for Cmd/Ctrl + K to open search
+  // Global web application shortcuts (Cmd/Ctrl + K, F for fullscreen, ? for web app center, 1-7 for views)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+      const isInput = activeTag === 'input' || activeTag === 'textarea' || document.activeElement?.getAttribute('contenteditable') === 'true';
+
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsSearchOpen((prev) => !prev);
+        return;
+      }
+
+      if (isInput) return;
+
+      if (e.key === '?' || e.key === '/') {
+        e.preventDefault();
+        setIsPhonePinModalOpen((prev) => !prev);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      } else if (e.key === '1') {
+        setActiveView('home');
+      } else if (e.key === '2') {
+        setActiveView('topics');
+      } else if (e.key === '3') {
+        setActiveView('arcade');
+      } else if (e.key === '4') {
+        setActiveView('quran');
+      } else if (e.key === '5') {
+        setIsExamModalOpen(true);
+      } else if (e.key === '6') {
+        setActiveView('ai-tutor');
+      } else if (e.key === '7') {
+        setIsMathSolverOpen(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -385,13 +417,13 @@ export default function App() {
         onToggleEducatorMode={() => setIsEducatorMode(!isEducatorMode)}
       />
 
-      {/* Offline / Data Notice Banner */}
+      {/* Web Application Offline / Data Notice Banner */}
       {isOfflineNotice && (
         <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-xs">
           <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <WifiOff className="w-4 h-4" />
-              <span>Offline Mode Active — All 5 subjects, 25 lessons & instant AI engine are cached locally and 100% accessible!</span>
+              <span>Web Application Offline Mode Active — All curriculum lessons, Holy Qur&apos;an 10 Qira&apos;at, and instant engines are cached locally!</span>
             </div>
             <button
               onClick={() => setIsNetworkManagerOpen(true)}
@@ -722,13 +754,16 @@ export default function App() {
         }}
       />
 
-      {/* Clean Modern Footer */}
+      {/* Clean Modern Web Application Footer */}
       <footer className="w-full bg-white border-t border-slate-200 mt-auto py-8 text-slate-500 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2.5 flex-wrap">
             <img src="/icon.svg" alt="Dan anty004 Badge" className="w-6 h-6 object-contain" />
             <span className="font-extrabold text-sm text-slate-900 font-['Outfit',sans-serif]">
               Dan anty<span className="text-emerald-700">004</span>
+            </span>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white">
+              Web App
             </span>
             <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400 text-slate-950">
               Badge
@@ -736,12 +771,13 @@ export default function App() {
             <span>• Invented by Aliyu Kamal Hamid</span>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
             <button
               onClick={() => setIsPhonePinModalOpen(true)}
               className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 transition"
+              title="Dan anty004 Web Application & Standalone Phone Badge"
             >
-              📱 Pin to Phone (Badge)
+              🌐 Web App & Phone Badge
             </button>
             <button onClick={() => setActiveView('home')} className="hover:text-slate-900 transition">Subjects</button>
             <button onClick={() => setActiveView('quran')} className="hover:text-emerald-700 font-bold text-emerald-800 transition">Holy Qur'an & Deen</button>
@@ -751,7 +787,18 @@ export default function App() {
             <button onClick={() => setActiveView('leaderboard')} className="hover:text-slate-900 transition">Leaderboard</button>
             <button onClick={() => setActiveView('dashboard')} className="hover:text-slate-900 transition">Dashboard</button>
             <span className="text-slate-300">|</span>
-            <span className="text-slate-400">Continuous Mastery</span>
+            <button
+              onClick={() => {
+                if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                  document.exitFullscreen().catch(() => {});
+                }
+              }}
+              className="hover:text-slate-900 transition font-mono"
+            >
+              Full-Screen (F)
+            </button>
           </div>
         </div>
       </footer>

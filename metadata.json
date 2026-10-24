@@ -1,6 +1,6 @@
 {
   "name": "Dan anty004",
-  "description": "Dan anty004 Universal Academy & Holy Quran Reader with 10 Canonical Qiraat, Studio Recorder, Exam Prep, Study Alarms, and PWA Phone Badge support.",
+  "description": "Dan anty004 Universal Academy & Holy Quran Web Application with 10 Canonical Qiraat, Studio Recorder, Exam Prep, Study Alarms, and standalone phone badge support.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
