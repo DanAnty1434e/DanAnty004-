@@ -58,17 +58,18 @@ export function WelcomeAboutModal({
           <div className="relative z-10 flex items-start justify-between">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-xs text-white text-[11px] font-black uppercase tracking-wider rounded-full border border-white/20">
-                  Welcome to DanAnty004 Academy
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-xs text-white text-[11px] font-black uppercase tracking-wider rounded-full border border-white/20 flex items-center gap-1.5">
+                  <img src="/icon.svg" alt="" className="w-3.5 h-3.5" />
+                  Welcome to Dan anty004
                 </span>
                 <span className="px-3 py-1 bg-amber-400 text-slate-950 text-[11px] font-black uppercase tracking-wider rounded-full flex items-center gap-1 shadow-xs">
                   <Sparkles className="w-3 h-3 fill-slate-950" />
-                  Official Platform
+                  Official Phone Badge
                 </span>
               </div>
 
               <h1 className="text-xl sm:text-2xl font-black font-['Outfit',sans-serif] tracking-tight">
-                All-in-One Learning, Math Solver & Arcade
+                Dan anty004 — All Subjects, 10 Qira&apos;at, Exam Prep & Offline Phone Badge
               </h1>
 
               <div className="flex items-center gap-2 pt-1 text-xs text-indigo-200 font-medium">

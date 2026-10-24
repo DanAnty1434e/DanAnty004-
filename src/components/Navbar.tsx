@@ -25,10 +25,13 @@ import {
   AlarmClock,
   FlaskConical,
   Moon,
+  Smartphone,
+  ShieldCheck,
 } from 'lucide-react';
 import { UserProgress, SubjectId, NetworkStatus, AppView, CLASS_LEVELS } from '../types';
 import { CURRICULUM_DATA } from '../data/curriculum';
 import { getLiveNetworkStatus, formatBytes, getSavedDataStats } from '../utils/networkManager';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface NavbarProps {
   progress: UserProgress;
@@ -42,6 +45,7 @@ interface NavbarProps {
   onOpenAboutModal: () => void;
   onOpenAlarmModal: () => void;
   onOpenExamPrep?: () => void;
+  onOpenPhonePinModal?: () => void;
   isEducatorMode: boolean;
   onToggleEducatorMode: () => void;
 }
@@ -58,11 +62,13 @@ export function Navbar({
   onOpenAboutModal,
   onOpenAlarmModal,
   onOpenExamPrep,
+  onOpenPhonePinModal,
   isEducatorMode,
   onToggleEducatorMode,
 }: NavbarProps) {
   const [netStatus, setNetStatus] = useState<NetworkStatus>(getLiveNetworkStatus());
   const [dataStats, setDataStats] = useState(getSavedDataStats());
+  const { isInstalled, isInstallable, badgeCount } = usePWAInstall();
 
   const currentClassDef = CLASS_LEVELS.find((c) => c.id === (progress.selectedClass || 'sss')) || CLASS_LEVELS[2];
 
@@ -94,15 +100,25 @@ export function Navbar({
               onClick={() => onNavigate('home')}
               className="flex items-center space-x-2.5 sm:space-x-3 group text-left focus:outline-hidden"
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
-                <GraduationCap className="w-5 h-5" />
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 border border-amber-400/80 flex items-center justify-center p-1 text-white shadow-xs group-hover:scale-105 transition-transform overflow-visible">
+                <img src="/icon.svg" alt="Dan anty004 Badge" className="w-full h-full object-contain drop-shadow" />
+                {badgeCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-red-600 border border-white text-white text-[8px] font-black rounded-full flex items-center justify-center shadow">
+                    {badgeCount}
+                  </span>
+                )}
               </div>
               <div>
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 font-['Outfit',sans-serif]">
-                  DanAnty<span className="text-indigo-600">004</span>
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 font-['Outfit',sans-serif]">
+                    Dan anty<span className="text-emerald-700">004</span>
+                  </span>
+                  <span className="hidden sm:inline-flex items-center px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider bg-amber-400/90 text-slate-950 rounded shadow-2xs">
+                    Badge
+                  </span>
+                </div>
                 <span className="text-[9px] sm:text-[10px] block text-slate-400 font-semibold leading-none mt-0.5">
-                  By Aliyu Kamal Hamid
+                  Universal Academy • By Aliyu Kamal Hamid
                 </span>
               </div>
             </button>
@@ -341,6 +357,33 @@ export function Navbar({
             >
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <span className="hidden md:inline text-xs">Search</span>
+            </button>
+
+            {/* Pin to Phone / Dan anty004 Badge Button */}
+            <button
+              id="open-phone-pin-btn"
+              onClick={onOpenPhonePinModal}
+              className={`relative flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-2xs group ${
+                isInstalled
+                  ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900'
+                  : 'bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white border-emerald-600'
+              }`}
+              title="Pin & Upload Dan anty004 to your phone with official launcher badge"
+            >
+              <Smartphone className={`w-3.5 h-3.5 ${isInstalled ? 'text-emerald-700' : 'text-amber-300'} group-hover:scale-110 transition-transform`} />
+              <span className="hidden sm:inline">
+                {isInstalled ? 'Phone App' : 'Pin to Phone'}
+              </span>
+              <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${
+                isInstalled ? 'bg-emerald-200 text-emerald-950' : 'bg-amber-400 text-slate-950'
+              }`}>
+                Badge
+              </span>
+              {badgeCount > 0 && (
+                <span className="absolute -top-1.5 -right-1 min-w-[17px] h-4 px-1 bg-red-600 border border-white text-white text-[8px] font-black rounded-full flex items-center justify-center shadow">
+                  {badgeCount}
+                </span>
+              )}
             </button>
 
             {/* About & Creator Button (Aliyu Kamal Hamid) */}

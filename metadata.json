@@ -1,6 +1,6 @@
 {
-  "name": "DanAnty004",
-  "description": "DanAnty004 Universal Academy invented by Aliyu Kamal Hamid. Featuring all subjects across Primary, Secondary, Full Holy Quran Reader with audio recitation & translation, Comprehensive Islamic Studies, WAEC/JAMB/BECE CBT exam prep, study alarms, and AI tutoring.",
+  "name": "Dan anty004",
+  "description": "Dan anty004 Universal Academy & Holy Quran Reader with 10 Canonical Qiraat, Studio Recorder, Exam Prep, Study Alarms, and PWA Phone Badge support.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

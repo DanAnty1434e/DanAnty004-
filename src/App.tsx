@@ -40,6 +40,7 @@ import { ActiveAlarmModal } from './components/ActiveAlarmModal';
 import { ExamTestPrepModal } from './components/ExamTestPrepModal';
 import { VirtualPracticalLab } from './components/VirtualPracticalLab';
 import { QuranReader } from './components/QuranReader';
+import { PhonePinBadgeModal } from './components/PhonePinBadgeModal';
 import {
   StudyAlarm,
   getSavedAlarms,
@@ -61,6 +62,7 @@ export default function App() {
   const [isClassSelectorOpen, setIsClassSelectorOpen] = useState(false);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [isPhonePinModalOpen, setIsPhonePinModalOpen] = useState(false);
   const [activeRingingAlarm, setActiveRingingAlarm] = useState<StudyAlarm | null>(null);
   const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(() => {
     try {
@@ -378,6 +380,7 @@ export default function App() {
         onOpenAboutModal={() => setIsWelcomeOpen(true)}
         onOpenAlarmModal={() => setIsAlarmModalOpen(true)}
         onOpenExamPrep={() => setIsExamModalOpen(true)}
+        onOpenPhonePinModal={() => setIsPhonePinModalOpen(true)}
         isEducatorMode={isEducatorMode}
         onToggleEducatorMode={() => setIsEducatorMode(!isEducatorMode)}
       />
@@ -671,6 +674,12 @@ export default function App() {
         onAskAIQuestion={(q, sId) => handleAskAIWithContext(q, sId || 'Exam Prep')}
       />
 
+      {/* Official Dan anty004 Phone Pin & Badging Manager Modal */}
+      <PhonePinBadgeModal
+        isOpen={isPhonePinModalOpen}
+        onClose={() => setIsPhonePinModalOpen(false)}
+      />
+
       {/* Active Ringing Alarm Screen Modal with Web Audio Synth */}
       {activeRingingAlarm && (
         <ActiveAlarmModal
@@ -716,14 +725,24 @@ export default function App() {
       {/* Clean Modern Footer */}
       <footer className="w-full bg-white border-t border-slate-200 mt-auto py-8 text-slate-500 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2.5">
+            <img src="/icon.svg" alt="Dan anty004 Badge" className="w-6 h-6 object-contain" />
             <span className="font-extrabold text-sm text-slate-900 font-['Outfit',sans-serif]">
-              DanAnty<span className="text-indigo-600">004</span>
+              Dan anty<span className="text-emerald-700">004</span>
             </span>
-            <span>• Clean Minimal Learning Platform for Students, Parents & Educators</span>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400 text-slate-950">
+              Badge
+            </span>
+            <span>• Invented by Aliyu Kamal Hamid</span>
           </div>
 
           <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setIsPhonePinModalOpen(true)}
+              className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 transition"
+            >
+              📱 Pin to Phone (Badge)
+            </button>
             <button onClick={() => setActiveView('home')} className="hover:text-slate-900 transition">Subjects</button>
             <button onClick={() => setActiveView('quran')} className="hover:text-emerald-700 font-bold text-emerald-800 transition">Holy Qur'an & Deen</button>
             <button onClick={() => setActiveView('topics')} className="hover:text-slate-900 transition">Topics (+20 🪙)</button>
